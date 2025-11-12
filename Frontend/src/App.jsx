@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import "./index.css";
 import axios from "axios";
 import {
+  PieChart, Pie, Cell, Tooltip,
+  LineChart, Line, XAxis, YAxis, CartesianGrid
+} from "recharts";
+
+import {
   Book,
   BarChart2,
   Brain,
@@ -401,6 +406,214 @@ const saveEntry = async () => {
       </aside>
     </div>
   </>
+  ) : page === "analytics" ? (
+  <>
+    <div className="insights-container">
+      <h2>Mood Insights 📊</h2>
+      <p className="insight-sub">
+        A reflection of your emotions and productivity over time.
+      </p>
+
+      {/* ====================== 1️⃣ CONSISTENCY TRACKER ====================== */}
+      <div className="consistency-section">
+        <h3>1-Year Consistency Tracker 🟩</h3>
+        <p className="muted">Your journaling activity throughout this year</p>
+
+        <div className="heatmap-container">
+          {/* Month Labels */}
+          <div className="month-labels">
+            {[
+              "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+            ].map((m, i) => (
+              <span key={i}>{m}</span>
+            ))}
+          </div>
+
+          {/* Heatmap Grid */}
+<div className="heatmap-grid">
+  {(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    // Start from January 1 of this year
+    const start = new Date(currentYear, 0, 1);
+    // End at December 31 of this year
+    const end = new Date(currentYear, 11, 31);
+
+    // Align to start on Sunday (like GitHub layout)
+    start.setDate(start.getDate() - start.getDay());
+    // Align end to Saturday (complete last week)
+    end.setDate(end.getDate() + (6 - end.getDay()));
+
+    const days = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().split("T")[0];
+      const entry = entries.find((e) => e.dateOnly === iso);
+      let level = 0;
+
+      if (entry) {
+        const wc = entry.text.trim().split(/\s+/).length;
+        if (wc > 100) level = 4;
+        else if (wc > 50) level = 3;
+        else if (wc > 20) level = 2;
+        else level = 1;
+        if (entry.mood === "Sad") level = Math.max(1, level - 1);
+      } else if (d > today) {
+        level = -1; // future day (gray)
+      }
+
+      days.push({
+        date: iso,
+        level,
+        month: d.getMonth(),
+        week: Math.floor((d - start) / (7 * 24 * 60 * 60 * 1000)),
+        dayOfWeek: d.getDay(),
+      });
+    }
+
+    return days.map((d, i) => {
+      const prevMonth = i > 0 ? days[i - 1].month : d.month;
+      const monthChange = d.month !== prevMonth;
+
+      return (
+        <div
+          key={i}
+          className={`heatmap-cell ${d.level === -1 ? "future" : `level-${d.level}`} ${
+            monthChange ? "month-marker" : ""
+          }`}
+          title={`${new Date(d.date).toDateString()} — ${
+            d.level > 0 ? "Active" : d.level === 0 ? "No entry" : "Upcoming"
+          }`}
+        />
+      );
+    });
+  })()}
+</div>
+
+
+        </div>
+
+        {/* Stats */}
+        <div className="consistency-stats">
+          {(() => {
+            const activeDays = entries.length;
+            const streak = (() => {
+              let count = 0;
+              let date = new Date();
+              while (entries.some(e => e.dateOnly === date.toISOString().split("T")[0])) {
+                count++;
+                date.setDate(date.getDate() - 1);
+              }
+              return count;
+            })();
+
+            return (
+              <>
+                <div className="stat">
+                  <span>🔥 Current Streak</span>
+                  <strong>{streak} day{streak !== 1 ? "s" : ""}</strong>
+                </div>
+                <div className="stat">
+                  <span>✅ Total Active Days</span>
+                  <strong>{activeDays}</strong>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* ====================== 2️⃣ MOOD SUMMARY ====================== */}
+      <div className="stats-cards">
+        <div className="stat-card happy">
+          <h3>😊 Happy Days</h3>
+          <p>{entries.filter((e) => e.mood === "Happy").length}</p>
+        </div>
+        <div className="stat-card neutral">
+          <h3>😐 Neutral Days</h3>
+          <p>{entries.filter((e) => e.mood === "Neutral").length}</p>
+        </div>
+        <div className="stat-card sad">
+          <h3>😢 Sad Days</h3>
+          <p>{entries.filter((e) => e.mood === "Sad").length}</p>
+        </div>
+      </div>
+
+      {/* ====================== 3️⃣ CHARTS SIDE BY SIDE ====================== */}
+      <div className="charts-row">
+        <div className="chart-section">
+          <h3>Mood Distribution</h3>
+          <PieChart width={300} height={300}>
+            <Pie
+              data={[
+                { name: "Happy", value: entries.filter(e => e.mood === "Happy").length },
+                { name: "Neutral", value: entries.filter(e => e.mood === "Neutral").length },
+                { name: "Sad", value: entries.filter(e => e.mood === "Sad").length },
+              ]}
+              cx="50%"
+              cy="50%"
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label
+            >
+              <Cell fill="#22c55e" />
+              <Cell fill="#94a3b8" />
+              <Cell fill="#ef4444" />
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </div>
+
+        <div className="chart-section">
+          <h3>Mood Over Time</h3>
+          <LineChart
+            width={400}
+            height={250}
+            data={entries.slice(0, 10).reverse().map(e => ({
+              name: e.date.split(",")[0],
+              moodScore: e.mood === "Happy" ? 2 : e.mood === "Neutral" ? 1 : 0,
+            }))}
+          >
+            <XAxis dataKey="name" />
+            <YAxis
+              ticks={[0, 1, 2]}
+              tickFormatter={(v) =>
+                v === 2 ? "Happy" : v === 1 ? "Neutral" : "Sad"
+              }
+            />
+            <CartesianGrid strokeDasharray="3 3" />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="moodScore"
+              stroke="#6366f1"
+              strokeWidth={3}
+            />
+          </LineChart>
+        </div>
+      </div>
+
+      {/* ====================== 4️⃣ AI INSIGHT ====================== */}
+      <div className="ai-insight">
+        {(() => {
+          const happy = entries.filter((e) => e.mood === "Happy").length;
+          const sad = entries.filter((e) => e.mood === "Sad").length;
+          const total = entries.length;
+          const moodRatio = total ? (happy / total) * 100 : 0;
+
+          if (moodRatio > 70)
+            return "You’ve been radiating positivity lately 🌞 Keep it up!";
+          else if (moodRatio < 40)
+            return "You've faced some tough days 💭 but resilience defines you.";
+          else
+            return "Balanced emotions ⚖️ — steady growth ahead!";
+        })()}
+      </div>
+    </div>
+  </>
+
 ) : (
   <div className="placeholder">
     <p>This section will soon show {page} UI.</p>
