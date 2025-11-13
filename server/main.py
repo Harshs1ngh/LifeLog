@@ -1,10 +1,12 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from fastapi.responses import PlainTextResponse
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-import re
+from pydantic import BaseModel
+import json, os, re, shutil
+from typing import List
 
 app = FastAPI()
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,35 +14,136 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Entry(BaseModel):
-    text: str
-@app.get("/", response_class=PlainTextResponse)
-def root():
-    return "✅ LifeLog API is running! Visit /docs for API endpoints."
+# Paths
+DATA_PATH = "data/entries.json"
+UPLOAD_IMAGE_PATH = "uploads/images"
+UPLOAD_AUDIO_PATH = "uploads/audio"
+
+os.makedirs("data", exist_ok=True)
+os.makedirs(UPLOAD_IMAGE_PATH, exist_ok=True)
+os.makedirs(UPLOAD_AUDIO_PATH, exist_ok=True)
+
+# Init JSON file
+if not os.path.exists(DATA_PATH):
+    with open(DATA_PATH, "w") as f:
+        json.dump([], f)
+
+
+# -----------------------------
+#  🔥 Mood Analyzer (simple)
+# -----------------------------
+def mood_of(text: str):
+    t = text.lower()
+    happy = re.findall(r"happy|joy|good|great|excited|love|fun|enjoy", t)
+    sad = re.findall(r"sad|bad|upset|angry|stress|depress|tease|shout|cry", t)
+
+    score = len(happy) - len(sad)
+
+    if score > 0:
+        return "Happy"
+    elif score < 0:
+        return "Sad"
+    return "Neutral"
+
 
 @app.post("/analyze")
-def analyze(entry: Entry):
-    text = entry.text.lower()
-    happy_words = re.findall(r"happy|joy|good|great|excited|love", text)
-    sad_words = re.findall(r"sad|bad|upset|angry|depress", text)
-    mood_score = len(happy_words) - len(sad_words)
-    if mood_score > 0:
-        mood = "Happy"
-    elif mood_score < 0:
-        mood = "Sad"
-    else:
-        mood = "Neutral"
-    return {"mood": mood, "score": mood_score}
+def analyze(entry: dict):
+    mood = mood_of(entry.get("text", ""))
+    return {"mood": mood}
 
-@app.post("/life_card")
-def life_card(entries: list[Entry]):
+
+# -----------------------------
+#  🔥 File Upload Endpoints
+# -----------------------------
+@app.post("/upload/image")
+def upload_image(file: UploadFile = File(...)):
+    filename = f"img_{os.path.basename(file.filename)}"
+    filepath = os.path.join(UPLOAD_IMAGE_PATH, filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"path": f"/uploads/images/{filename}"}
+
+
+@app.post("/upload/audio")
+def upload_audio(file: UploadFile = File(...)):
+    filename = f"audio_{os.path.basename(file.filename)}"
+    filepath = os.path.join(UPLOAD_AUDIO_PATH, filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"path": f"/uploads/audio/{filename}"}
+
+
+# -----------------------------
+#  🔥 Save all entries
+# -----------------------------
+@app.post("/save_entries")
+def save_entries(entries: List[dict]):
+    with open(DATA_PATH, "w") as f:
+        json.dump(entries, f, indent=2)
+
+    return {"status": "saved", "count": len(entries)}
+
+
+# -----------------------------
+#  🔥 Load entries
+# -----------------------------
+@app.get("/get_entries")
+def get_entries():
+    with open(DATA_PATH, "r") as f:
+        data = json.load(f)
+
+    return {
+        "entries": data    # ⭐ Now frontend receives the correct key
+    }
+
+
+# -----------------------------
+#  🔥 LifeLog Summary
+# -----------------------------
+@app.get("/life_card")
+def life_card():
+    with open(DATA_PATH, "r") as f:
+        entries = json.load(f)
+
     total = len(entries)
     if not total:
         return {"summary": "No entries yet."}
-    moods = [analyze(e)["mood"] for e in entries]
-    happy_count = moods.count("Happy")
-    sad_count = moods.count("Sad")
+
+    moods = [e["mood"] for e in entries]
+    happy = moods.count("Happy")
+    sad = moods.count("Sad")
+
     return {
-        "title": "Life Card — Simple Summary",
-        "summary": f"In your last {total} entries, you had {happy_count} happy days and {sad_count} sad days.",
+        "total_entries": total,
+        "happy": happy,
+        "sad": sad,
+        "summary": f"Across {total} entries — {happy} were happy, {sad} were sad."
+    }
+# -----------------------------
+#  🔥 Save ONE confirmed entry (APPENDS)
+# -----------------------------
+@app.post("/save_entry")
+def save_entry(entry: dict):
+
+    # 1. Load existing entries
+    try:
+        with open(DATA_PATH, "r") as f:
+            existing = json.load(f)
+    except:
+        existing = []
+
+    # 2. Append the new entry
+    existing.append(entry)
+
+    # 3. Save back to file
+    with open(DATA_PATH, "w") as f:
+        json.dump(existing, f, indent=2)
+
+    return {
+        "status": "stored",
+        "total": len(existing)
     }
