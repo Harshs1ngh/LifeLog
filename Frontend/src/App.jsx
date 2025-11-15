@@ -66,6 +66,13 @@ export default function App() {
   const clearCompleted = () =>
     setTasks(tasks.filter((t) => !t.done));
 
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [darkMode]);
 
   /* ===========================
         LOAD ENTRIES FROM SERVER

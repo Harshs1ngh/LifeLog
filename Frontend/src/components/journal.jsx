@@ -428,12 +428,12 @@ export default function Journal({
         <div className="attachments-row" style={{display:"flex",gap:12,alignItems:"center",marginTop:12}}>
           <label className="file-btn" style={{cursor:"pointer"}}>
             <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={(e)=> onSelectImages(e.target.files)} />
-            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>🖼 Add images</span>
+            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>Add images</span>
           </label>
 
           <label className="file-btn" style={{cursor:"pointer"}}>
             <input type="file" accept="audio/*" style={{display:"none"}} onChange={(e)=> onSelectAudio(e.target.files[0])} />
-            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>🎤 Add audio</span>
+            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>Add audio</span>
           </label>
 
           <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
@@ -464,10 +464,10 @@ export default function Journal({
 
       {/* entries feed */}
       <div className="entries" style={{marginTop:16,display:"grid",gap:12}}>
-        {localEntries.length === 0 ? (
-          <div className="card empty">No entries yet — write something to begin.</div>
-        ) : (
-          localEntries.slice().map(entry => (
+        {todaysEntries.length === 0 ? (
+  <div className="card empty">No entries yet — write something to begin.</div>
+) : (
+  todaysEntries.slice().map(entry => (
             <article key={entry.id} className="entry-card card" style={{padding:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
