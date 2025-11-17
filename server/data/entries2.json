@@ -1,0 +1,143 @@
+[
+    {
+  "id": 1763394030901,
+  "date": "06/11/2025, 8:28:44 pm",
+  "dateOnly": "2025-11-06",
+  "text": "A tiring day but not too bad. Got some work done but felt mentally drained by evening.",
+  "mood": "No Luck",
+  "images": [],
+  "audio": null,
+  "confirmed": true
+},
+{
+  "id": 1763394030902,
+  "date": "05/11/2025, 7:14:59 pm",
+  "dateOnly": "2025-11-05",
+  "text": "Really good energy today! I cleaned my desk, organized my files, and felt super motivated.",
+  "mood": "Great Day",
+  "images": [],
+  "audio": null,
+  "confirmed": true
+},
+{
+  "id": 1763394030903,
+  "date": "04/11/2025, 9:05:30 pm",
+  "dateOnly": "2025-11-04",
+  "text": "Felt a bit lonely today. Tried to distract myself with music and scrolling social media.",
+  "mood": "Sad",
+  "images": [],
+  "audio": null,
+  "confirmed": true
+},
+  {
+    "id": 1763394031001,
+    "date": "07/11/2025, 8:45:10 pm",
+    "dateOnly": "2025-11-07",
+    "text": "Today felt heavy. I didn’t feel like talking to anyone and just stayed in my room. My mood was low, and I couldn’t focus well.",
+    "mood": "Bad Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031002,
+    "date": "08/11/2025, 9:22:51 pm",
+    "dateOnly": "2025-11-08",
+    "text": "A neutral day overall. I did some work, watched a few videos, and took a long walk. Not too bad, not too good.",
+    "mood": "Neutral",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031003,
+    "date": "09/11/2025, 7:33:11 pm",
+    "dateOnly": "2025-11-09",
+    "text": "Pretty good day! I finished an assignment, listened to music, and felt motivated. Mood was positive.",
+    "mood": "Good Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031004,
+    "date": "10/11/2025, 10:15:41 pm",
+    "dateOnly": "2025-11-10",
+    "text": "Had a bit of stress today. Some work piled up and I felt overwhelmed, but managed to push through.",
+    "mood": "No Luck",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031005,
+    "date": "11/11/2025, 8:02:29 pm",
+    "dateOnly": "2025-11-11",
+    "text": "A smooth and peaceful day. Spent time learning something new and felt productive.",
+    "mood": "Vibing Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031006,
+    "date": "12/11/2025, 7:42:10 pm",
+    "dateOnly": "2025-11-12",
+    "text": "Felt a little anxious today. Not sure why but my mind was tense. Hoping for better tomorrow.",
+    "mood": "Sad",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031007,
+    "date": "13/11/2025, 6:55:47 pm",
+    "dateOnly": "2025-11-13",
+    "text": "Had an okay day. Worked normally, had tea, and chilled. Nothing special.",
+    "mood": "Neutral",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031008,
+    "date": "14/11/2025, 10:19:23 pm",
+    "dateOnly": "2025-11-14",
+    "text": "Great day! Completed a personal task and felt proud of myself. Energy was good.",
+    "mood": "Great Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031009,
+    "date": "15/11/2025, 9:40:18 pm",
+    "dateOnly": "2025-11-15",
+    "text": "Quite a relaxing day. Took a break, watched shows, and felt calm.",
+    "mood": "Vibing Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+  {
+    "id": 1763394031010,
+    "date": "16/11/2025, 7:58:59 pm",
+    "dateOnly": "2025-11-16",
+    "text": "Mixed day. Had some good moments but also felt irritated at times.",
+    "mood": "Neutral",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  },
+
+  {
+    "id": 1763394032297,
+    "date": "17/11/2025, 9:10:32 pm",
+    "dateOnly": "2025-11-17",
+    "text": "Today was a calm and productive day. I finished some work, cleaned my room, and felt relaxed throughout the evening.",
+    "mood": "Good Day",
+    "images": [],
+    "audio": null,
+    "confirmed": true
+  }
+]

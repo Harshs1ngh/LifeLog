@@ -4,10 +4,40 @@
   --bg: #f6f8fb;
   --card: rgba(255,255,255,0.8);
   --muted: #6b7280;
-  --accent-a: #6366F1;
-  --accent-b: #4F46E5;
+  --accent-a: #637df1;
+  --accent-b: #b346e5;
+  --btn-gradient: linear-gradient(90deg,var(--accent-a),var(--accent-b));
   --glass-border: rgba(15,23,42,0.04);
   --shadow: 0 6px 20px rgba(16,24,40,0.06);
+}
+
+/* UNIVERSAL BUTTONS — all use same gradient */
+.btn-primary,
+.save-entry-btn,
+.cta,
+.nav-link.active,
+.pill.active,
+.cat-pill.active,
+.btn-add-modern,
+.chip.active,
+.summary-actions .btn-primary {
+  background: var(--btn-gradient) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(99,125,241,0.25);
+}
+.app.dark .btn-primary,
+.app.dark .save-entry-btn,
+.app.dark .nav-link.active,
+.app.dark .cta,
+.app.dark .cat-pill.active,
+.app.dark .pill.active,
+.app.dark .chip.active,
+.app.dark .btn-add-modern,
+.app.dark .summary-actions .btn-primary {
+  background: var(--btn-gradient) !important;
+  color: white !important;
+  box-shadow: 0 8px 24px rgba(123,108,255,0.3);
 }
 
 /* DARK MODE VARIABLES */

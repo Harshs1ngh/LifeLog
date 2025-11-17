@@ -355,34 +355,38 @@ export default function Journal({
     setSummaryOpen(true);
   };
 
-  // Confirm & save -> call server /save_entries with the full updated entries list
-  const handleConfirmAndSave = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      // mark today's entries confirmed
-      const updated = localEntries.map(e => e.dateOnly === todayIso ? { ...e, confirmed: true } : e);
-      // POST to server
-      const res = await fetch(`${API_BASE}/save_entries`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if(!res.ok) throw new Error("server save failed");
-      // update local state & storage
-      setLocalEntries(updated);
-      localStorage.setItem("entries", JSON.stringify(updated));
-      // notify app
-      window.dispatchEvent(new CustomEvent("lifelog:entries-updated", { detail: updated }));
-      setSummaryOpen(false);
-      alert("✅ Today's entries saved to server (data/entries.json).");
-    } catch(err){
-      console.error("confirm save failed", err);
-      setError("Failed to save to server. Check backend and CORS.");
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleConfirmAndSave = async () => {
+  setLoading(true);
+  setError("");
+  try {
+    // mark today's entries confirmed
+    const updated = localEntries.map(e => 
+      e.dateOnly === todayIso ? { ...e, confirmed: true } : e
+    );
+
+    // POST to server (CORRECT FORMAT)
+    const res = await fetch(`${API_BASE}/save_entries`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entries: updated }),
+    });
+
+    if (!res.ok) throw new Error("server save failed");
+
+    // update local state & storage
+    setLocalEntries(updated);
+    localStorage.setItem("entries", JSON.stringify(updated));
+
+    setSummaryOpen(false);
+    alert("✅ Saved to server!");
+
+  } catch (err) {
+    console.error("confirm save failed", err);
+    setError("Failed to save to server. Check backend and CORS.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // simple delete entry (local)
   const handleDelete = (id) => {

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import json, os, re, shutil
@@ -11,34 +11,39 @@ app = FastAPI()
 # -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # (Replace * with your frontend URL after deployment)
+    allow_origins=["*"],  # Change later in deployment
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # -----------------------------
-# SAFE BASE PATHS (Railway-safe)
+# SAFE PATHS
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATA_PATH = os.path.join(BASE_DIR, "data", "entries.json")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-UPLOAD_IMAGE_PATH = os.path.join(UPLOAD_DIR, "images")
-UPLOAD_AUDIO_PATH = os.path.join(UPLOAD_DIR, "audio")
+IMAGE_DIR = os.path.join(UPLOAD_DIR, "images")
+AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 
-os.makedirs(os.path.join(BASE_DIR, "data"), exist_ok=True)
-os.makedirs(UPLOAD_IMAGE_PATH, exist_ok=True)
-os.makedirs(UPLOAD_AUDIO_PATH, exist_ok=True)
+# NEW RENAMED FILE
+DATA_PATH = os.path.join(DATA_DIR, "entries2.json")
 
-# Init file
+print("📌 Using DATA_PATH =", DATA_PATH)
+
+# Create folders if missing
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(IMAGE_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
+# Initialize entries2.json if missing
 if not os.path.exists(DATA_PATH):
-    with open(DATA_PATH, "w") as f:
-        json.dump([], f)
+    with open(DATA_PATH, "w", encoding="utf-8") as f:
+        json.dump([], f, indent=2)
 
-# -----------------------------
 # Serve uploads
-# -----------------------------
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 
 # -----------------------------
 # Mood Analyzer
@@ -64,7 +69,7 @@ def analyze(entry: dict):
 @app.post("/upload/image")
 def upload_image(file: UploadFile = File(...)):
     filename = f"img_{os.path.basename(file.filename)}"
-    filepath = os.path.join(UPLOAD_IMAGE_PATH, filename)
+    filepath = os.path.join(IMAGE_DIR, filename)
 
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -78,7 +83,7 @@ def upload_image(file: UploadFile = File(...)):
 @app.post("/upload/audio")
 def upload_audio(file: UploadFile = File(...)):
     filename = f"audio_{os.path.basename(file.filename)}"
-    filepath = os.path.join(UPLOAD_AUDIO_PATH, filename)
+    filepath = os.path.join(AUDIO_DIR, filename)
 
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -87,14 +92,26 @@ def upload_audio(file: UploadFile = File(...)):
 
 
 # -----------------------------
-# Save ALL entries
+# Save ALL entries (CONFIRM)
 # -----------------------------
 @app.post("/save_entries")
-def save_entries(entries: List[dict]):
-    with open(DATA_PATH, "w") as f:
-        json.dump(entries, f, indent=2)
-    return {"status": "saved", "count": len(entries)}
+def save_entries(payload: dict):
+    print("📥 Incoming payload:", payload)   # DEBUG PRINT
 
+    if "entries" not in payload:
+        raise HTTPException(status_code=400, detail="Missing key: entries")
+
+    entries = payload["entries"]
+
+    print("📦 Entries count:", len(entries))  # DEBUG PRINT
+
+    # Write entire list
+    with open(DATA_PATH, "w", encoding="utf-8") as f:
+        json.dump(entries, f, ensure_ascii=False, indent=2)
+
+    print("💾 Saved entries into:", DATA_PATH)  # DEBUG PRINT
+
+    return {"status": "saved", "count": len(entries)}
 
 # -----------------------------
 # Save ONE entry (append)
@@ -102,14 +119,14 @@ def save_entries(entries: List[dict]):
 @app.post("/save_entry")
 def save_entry(entry: dict):
     try:
-        with open(DATA_PATH, "r") as f:
+        with open(DATA_PATH, "r", encoding="utf-8") as f:
             existing = json.load(f)
     except:
         existing = []
 
     existing.append(entry)
 
-    with open(DATA_PATH, "w") as f:
+    with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(existing, f, indent=2)
 
     return {"status": "stored", "total": len(existing)}
@@ -120,7 +137,7 @@ def save_entry(entry: dict):
 # -----------------------------
 @app.get("/get_entries")
 def get_entries():
-    with open(DATA_PATH, "r") as f:
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
     return {"entries": data}
 
@@ -130,7 +147,7 @@ def get_entries():
 # -----------------------------
 @app.get("/life_card")
 def life_card():
-    with open(DATA_PATH, "r") as f:
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
         entries = json.load(f)
 
     total = len(entries)

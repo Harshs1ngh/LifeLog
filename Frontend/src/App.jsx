@@ -5,7 +5,6 @@ import axios from "axios";
 
 import Header from "./components/header";
 import Journal from "./components/journal";
-import Tasks from "./components/task";
 import Insights from "./components/insight";
 import LifeCard from "./components/lifelogs";
 
@@ -65,7 +64,7 @@ export default function App() {
 
   const clearCompleted = () =>
     setTasks(tasks.filter((t) => !t.done));
-
+  
 useEffect(() => {
   if (darkMode) {
     document.documentElement.classList.add("dark");
