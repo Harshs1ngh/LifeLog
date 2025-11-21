@@ -1,5 +1,4 @@
 
-/* ---------- THEME VARIABLES ---------- */
 :root{
   --bg: #f6f8fb;
   --card: rgba(255,255,255,0.8);
@@ -11,7 +10,6 @@
   --shadow: 0 6px 20px rgba(16,24,40,0.06);
 }
 
-/* UNIVERSAL BUTTONS — all use same gradient */
 .btn-primary,
 .save-entry-btn,
 .cta,
@@ -40,16 +38,11 @@
   box-shadow: 0 8px 24px rgba(123,108,255,0.3);
 }
 
-/* DARK MODE VARIABLES */
-/* --------------------
-   PROFESSIONAL DARK MODE
-   -------------------- */
 .app.dark {
-  /* MAIN COLORS */
-  --bg: #0d1117; /* deep neutral black-blue */
-  --card: #161b22; /* Github-style card */
+  --bg: #0d1117;
+  --card: #161b22; 
   --muted: #8b98a5;
-  --accent-a: #7b6cff; /* premium gradient accent */
+  --accent-a: #7b6cff;
   --accent-b: #6a5cf8;
 
   /* GLASS + BORDER */

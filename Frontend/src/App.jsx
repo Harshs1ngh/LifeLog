@@ -1,34 +1,23 @@
-// src/App.jsx
 import React, { useState, useEffect } from "react";
 import "./index.css";
 import axios from "axios";
 
 import Header from "./components/header";
-import Journal from "./components/journal";
+import Journal from "./components/journal"; 
 import Insights from "./components/insight";
 import LifeCard from "./components/lifelogs";
 
 export default function App() {
 
-  /* ===========================
-        GLOBAL UI
-  ============================ */
   const [darkMode, setDarkMode] = useState(false);
   const [page, setPage] = useState("journal");
 
-  /* ===========================
-        ENTRIES (MAIN STORAGE)
-  ============================ */
-  const [entries, setEntries] = useState([]);   // <-- fixed (no localStorage)
+  const [entries, setEntries] = useState([]); 
   const [todayText, setTodayText] = useState("");
   const [mood, setMood] = useState(null);
 
-  const API = "http://127.0.0.1:8000"; // FASTAPI backend
+  const API = "http://127.0.0.1:8000"; 
 
-
-  /* ===========================
-        TASK SYSTEM
-  ============================ */
   const [tasks, setTasks] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("tasks")) || [];
@@ -73,16 +62,12 @@ useEffect(() => {
   }
 }, [darkMode]);
 
-  /* ===========================
-        LOAD ENTRIES FROM SERVER
-  ============================ */
   useEffect(() => {
     const loadFromServer = async () => {
       try {
         const res = await fetch(`${API}/get_entries`);
         const data = await res.json();
 
-        // 💥 FIX: ensure entries is ALWAYS an array
         setEntries(Array.isArray(data.entries) ? data.entries : []);
       } catch (err) {
         console.error("Error loading entries:", err);
@@ -94,9 +79,7 @@ useEffect(() => {
   }, []);
 
 
-  /* ===========================
-        SAVE ENTRY (ANALYZE)
-  ============================ */
+       // SAVE ENTRY
   const saveEntry = async (textOnly) => {
     if (!textOnly || !textOnly.trim()) return;
 
@@ -126,24 +109,18 @@ useEffect(() => {
   };
 
 
-  /* ===========================
-        ADD ENTRY (WITH MEDIA)
-  ============================ */
+      //  ADD ENTRY (WITH MEDIA)
   const addEntry = (entry) => {
     setEntries((prev) => [entry, ...prev]);
   };
 
 
-  /* ===========================
-        DELETE ENTRY
-  ============================ */
+      //  DELETE ENTRY
   const deleteEntry = (id) =>
     setEntries(entries.filter((e) => e.id !== id));
 
 
-  /* ===========================
-        REFRESH AFTER CONFIRM
-  ============================ */
+      //  REFRESH AFTER CONFIRM
   const refreshEntries = async () => {
     try {
       const res = await fetch(`${API}/get_entries`);
@@ -155,9 +132,6 @@ useEffect(() => {
   };
 
 
-  /* ===========================
-        RENDER UI
-  ============================ */
   return (
     <div className={darkMode ? "app dark" : "app"}>
       <Header

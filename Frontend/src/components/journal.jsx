@@ -1,17 +1,6 @@
-// src/components/Journal.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { Smile, Frown, Meh } from "lucide-react";
 
-/*
-  Journal.jsx - Final version
-  - Auto mood detection (local rule-based)
-  - Summary modal (Apple glass style)
-  - Save entry -> uploads media to FastAPI (/upload/image, /upload/audio)
-  - Confirm -> POST /save_entries to persist server/data/entries.json
-  - Uses localStorage for immediate UX and syncs with server on confirm
-*/
-
-// ----------------- Local sentiment analyzer (rule-based) -----------------
 const POSITIVE_LEX = {
   good: 1, great: 1.4, excellent: 1.7, happy: 1.3, joy: 1.2, fun: 1.1,
   enjoyed: 1.2, loved: 1.5, proud: 1.3, calm: 0.9, relaxed: 0.9, uplifted: 1.1,
@@ -139,7 +128,6 @@ function generateSummaryFromEvents(events, overallLevel){
   return { summary: summaryParts.join(" "), interpretation: interp, advice };
 }
 
-// ----------------- UI helpers -----------------
 const MoodIcon = ({ mood }) => {
   if (mood === "Happy") return <Smile size={16} color="#22c55e" />;
   if (mood === "Sad") return <Frown size={16} color="#ef4444" />;
@@ -148,30 +136,29 @@ const MoodIcon = ({ mood }) => {
 
 const API_BASE = "http://127.0.0.1:8000";
 
-// ----------------- Component -----------------
+//  Component
 export default function Journal({
   entries = [],
   todayText,
   setTodayText,
-  saveEntry,     // optional (keeps backward compatibility)
-  addEntry,      // optional (if parent passes an add function)
+  saveEntry,    
+  addEntry,     
   deleteEntry
 }) {
   // local UI state
   const [localEntries, setLocalEntries] = useState(() => {
     try { return JSON.parse(localStorage.getItem("entries")) || []; } catch { return []; }
   });
-  const [imageFiles, setImageFiles] = useState([]); // File objects
-  const [imagePreviews, setImagePreviews] = useState([]); // objectURLs
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]); 
   const [audioFile, setAudioFile] = useState(null);
   const [audioPreview, setAudioPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [generated, setGenerated] = useState(null); // analysis pack
+  const [generated, setGenerated] = useState(null); 
   const [extraText, setExtraText] = useState("");
 
-  // sync props -> localEntries when parent updates
   useEffect(() => {
     if (entries && entries.length) {
       setLocalEntries(entries);
@@ -179,7 +166,6 @@ export default function Journal({
     }
   }, [entries]);
 
-  // build today's entries and combined text
   const todayIso = new Date().toISOString().split("T")[0];
   const todaysEntries = (localEntries || []).filter(e => e.dateOnly === todayIso);
 
@@ -189,10 +175,8 @@ export default function Journal({
     return (base + extra).trim();
   }, [todaysEntries, todayText]);
 
-  // detected summary/mood from combinedText
   const detected = useMemo(() => {
     if (!combinedText) return { label: "Not analyzed", score: null };
-    // local analysis:
     const sentences = splitSentences(combinedText);
     const events = sentences.map(s => {
       const sc = scoreSentence(s);

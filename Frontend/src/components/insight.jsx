@@ -1,4 +1,3 @@
-// src/components/Insights.jsx
 import React, { useMemo, useState } from "react";
 import {
   LineChart,
@@ -13,18 +12,6 @@ import {
   Cell,
 } from "recharts";
 
-/*
-  Cleaned & optimized Insights component
-  Props:
-    - entries: array of { id, date, dateOnly, text, mood, images?, audio? }
-  Keeps the same UI and behaviour as your original file but:
-    - Removes duplicate/unused code
-    - Fixes heatmap month grid generation
-    - Uses useMemo extensively for expensive computations
-    - Small helper components for readability
-*/
-
-// ---- constants ----
 const LEVELS = [
   { v: 1, label: "Bad Day", color: "#ef4444" },
   { v: 2, label: "No Luck", color: "#f97316" },
@@ -117,7 +104,6 @@ const avgScoreForDate = (arr) => {
   return Math.round(((sum / arr.length) * 10)) / 10;
 };
 
-// small presentational subcomponents
 function StatCard({ title, value, subtitle }) {
   return (
     <div className="card stat-mini">
@@ -129,14 +115,12 @@ function StatCard({ title, value, subtitle }) {
 }
 
 export default function Insights({ entries = [] }) {
-  const [selectedRange, setSelectedRange] = useState("week"); // 'day' | 'week' | 'month'
+  const [selectedRange, setSelectedRange] = useState("week"); 
   const [searchQ, setSearchQ] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // group entries by date (yyyy-mm-dd)
   const grouped = useMemo(() => groupByDate(entries), [entries]);
 
-  // per-day average scores
   const dayScores = useMemo(() => {
     const map = {};
     Object.keys(grouped).forEach((date) => {
@@ -145,7 +129,6 @@ export default function Insights({ entries = [] }) {
     return map;
   }, [grouped]);
 
-  // WEEKLY chart data (last 7 days)
   const weeklyChartData = useMemo(() => {
     const arr = [];
     for (let i = 6; i >= 0; i--) {
@@ -162,7 +145,6 @@ export default function Insights({ entries = [] }) {
     return arr;
   }, [dayScores, grouped]);
 
-  // heatmap grid for current month (aligned to Sunday..Saturday)
   const monthlyHeatmap = useMemo(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -170,7 +152,6 @@ export default function Insights({ entries = [] }) {
     const monthStart = new Date(year, month, 1);
     const monthEnd = new Date(year, month + 1, 0);
 
-    // find grid start (previous Sunday) and grid end (next Saturday)
     const gridStart = new Date(monthStart);
     gridStart.setDate(monthStart.getDate() - monthStart.getDay());
     const gridEnd = new Date(monthEnd);
@@ -191,11 +172,10 @@ export default function Insights({ entries = [] }) {
 
   // streaks & weekCounts
   const streaks = useMemo(() => {
-    const dates = Object.keys(grouped).sort(); // ascending
+    const dates = Object.keys(grouped).sort(); 
     if (dates.length === 0) return { current: 0, longest: 0, weekCounts: [] };
 
     const setDates = new Set(dates);
-    // current streak = consecutive days ending today
     let current = 0;
     let dt = new Date();
     while (setDates.has(dt.toISOString().split("T")[0])) {
@@ -241,45 +221,45 @@ export default function Insights({ entries = [] }) {
   }, [grouped, dayScores]);
 
   // pie data for selected range
-const pieData = useMemo(() => {
-  let sliceDates = [];
+  const pieData = useMemo(() => {
+    let sliceDates = [];
 
-  if (selectedRange === "day") {
-    sliceDates.push(selectedDate || new Date().toISOString().split("T")[0]);
-  } else if (selectedRange === "week") {
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      sliceDates.push(d.toISOString().split("T")[0]);
+    if (selectedRange === "day") {
+      sliceDates.push(selectedDate || new Date().toISOString().split("T")[0]);
+    } else if (selectedRange === "week") {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        sliceDates.push(d.toISOString().split("T")[0]);
+      }
+    } else {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+        sliceDates.push(new Date(y, m, i).toISOString().split("T")[0]);
+      }
     }
-  } else {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
-      sliceDates.push(new Date(y, m, i).toISOString().split("T")[0]);
-    }
-  }
 
-  const counts = { Happy: 0, Neutral: 0, Sad: 0 };
+    const counts = { Happy: 0, Neutral: 0, Sad: 0 };
 
-  sliceDates.forEach(date => {
-    (grouped[date] || []).forEach(e => {
-      const score = scoreEntry(e); // 1..7 scaled
-      if (score >= 5) counts.Happy++;
-      else if (score === 3 || score === 4) counts.Neutral++;
-      else counts.Sad++;
+    sliceDates.forEach(date => {
+      (grouped[date] || []).forEach(e => {
+        const score = scoreEntry(e);
+        if (score >= 5) counts.Happy++;
+        else if (score === 3 || score === 4) counts.Neutral++;
+        else counts.Sad++;
+      });
     });
-  });
 
-  return [
-    { name: "Happy", value: counts.Happy },
-    { name: "Neutral", value: counts.Neutral },
-    { name: "Sad", value: counts.Sad }
-  ];
-}, [selectedRange, selectedDate, grouped]);
+    return [
+      { name: "Happy", value: counts.Happy },
+      { name: "Neutral", value: counts.Neutral },
+      { name: "Sad", value: counts.Sad }
+    ];
+  }, [selectedRange, selectedDate, grouped]);
 
-  // AI summary (week vs previous week + month)
+  // AI summary 
   const aiSummary = useMemo(() => {
     const getAvg = (start, end) => {
       const vals = [];

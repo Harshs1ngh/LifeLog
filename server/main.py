@@ -6,19 +6,13 @@ from typing import List
 
 app = FastAPI()
 
-# -----------------------------
-# CORS
-# -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change later in deployment
+    allow_origins=["*"],  
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# -----------------------------
-# SAFE PATHS
-# -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -26,17 +20,14 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 IMAGE_DIR = os.path.join(UPLOAD_DIR, "images")
 AUDIO_DIR = os.path.join(UPLOAD_DIR, "audio")
 
-# NEW RENAMED FILE
 DATA_PATH = os.path.join(DATA_DIR, "entries2.json")
 
 print("📌 Using DATA_PATH =", DATA_PATH)
 
-# Create folders if missing
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(IMAGE_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
-# Initialize entries2.json if missing
 if not os.path.exists(DATA_PATH):
     with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump([], f, indent=2)
@@ -45,9 +36,6 @@ if not os.path.exists(DATA_PATH):
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
-# -----------------------------
-# Mood Analyzer
-# -----------------------------
 def mood_of(text: str):
     t = text.lower()
     happy = re.findall(r"happy|joy|good|great|excited|love|fun|enjoy", t)
@@ -63,9 +51,7 @@ def analyze(entry: dict):
     return {"mood": mood}
 
 
-# -----------------------------
 # Upload image
-# -----------------------------
 @app.post("/upload/image")
 def upload_image(file: UploadFile = File(...)):
     filename = f"img_{os.path.basename(file.filename)}"
@@ -77,9 +63,7 @@ def upload_image(file: UploadFile = File(...)):
     return {"path": f"/uploads/images/{filename}"}
 
 
-# -----------------------------
 # Upload audio
-# -----------------------------
 @app.post("/upload/audio")
 def upload_audio(file: UploadFile = File(...)):
     filename = f"audio_{os.path.basename(file.filename)}"
@@ -91,31 +75,27 @@ def upload_audio(file: UploadFile = File(...)):
     return {"path": f"/uploads/audio/{filename}"}
 
 
-# -----------------------------
-# Save ALL entries (CONFIRM)
-# -----------------------------
+# Save ALL entries 
 @app.post("/save_entries")
 def save_entries(payload: dict):
-    print("📥 Incoming payload:", payload)   # DEBUG PRINT
+    print("📥 Incoming payload:", payload) 
 
     if "entries" not in payload:
         raise HTTPException(status_code=400, detail="Missing key: entries")
 
     entries = payload["entries"]
 
-    print("📦 Entries count:", len(entries))  # DEBUG PRINT
+    print("📦 Entries count:", len(entries))  
 
     # Write entire list
     with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(entries, f, ensure_ascii=False, indent=2)
 
-    print("💾 Saved entries into:", DATA_PATH)  # DEBUG PRINT
+    print("💾 Saved entries into:", DATA_PATH)
 
     return {"status": "saved", "count": len(entries)}
 
-# -----------------------------
 # Save ONE entry (append)
-# -----------------------------
 @app.post("/save_entry")
 def save_entry(entry: dict):
     try:
@@ -132,9 +112,7 @@ def save_entry(entry: dict):
     return {"status": "stored", "total": len(existing)}
 
 
-# -----------------------------
 # Load entries
-# -----------------------------
 @app.get("/get_entries")
 def get_entries():
     with open(DATA_PATH, "r", encoding="utf-8") as f:
@@ -142,9 +120,7 @@ def get_entries():
     return {"entries": data}
 
 
-# -----------------------------
 # LifeCard summary
-# -----------------------------
 @app.get("/life_card")
 def life_card():
     with open(DATA_PATH, "r", encoding="utf-8") as f:
