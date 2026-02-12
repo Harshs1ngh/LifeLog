@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./index.css";
 import axios from "axios";
-
 import Header from "./components/header";
 import Journal from "./components/journal"; 
 import Insights from "./components/insight";
