@@ -1,9 +1,8 @@
 import axios from "axios";
 
-export const API_BASE = "http://localhost:5000";
-
 export const api = axios.create({
-  baseURL: `${API_BASE}/api`,
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
 
 // Attach JWT token to every request if present
@@ -25,6 +24,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const API_BASE = import.meta.env.VITE_API_URL?.replace("/api", "") || "";
 
 export const analyzeEntry = async (text) => {
   const res = await api.post("/entries/analyze", { text });

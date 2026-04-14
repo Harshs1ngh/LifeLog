@@ -7,9 +7,7 @@ import LifeCard from "./components/lifelogs.jsx";
 import Auth from "./components/Auth.jsx";
 import { api } from "./services/api.js";
 import LeaderboardPage from "./components/Leaderboard.jsx";
-
-export const API_BASE = "https://innerspace-a4oq.onrender.com";
-
+ 
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [page, setPage] = useState("journal");
@@ -126,7 +124,7 @@ export default function App() {
               deleteEntry={deleteEntry}
               mood={mood}
               refreshEntries={refreshEntries}
-              API={API_BASE}
+              API={import.meta.env.VITE_API_URL}
             />
           )}
 
