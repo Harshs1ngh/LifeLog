@@ -1,6 +1,6 @@
 
 :root{
-  --bg: #f6f8fb;
+  --bg: #dce2fa;
   --card: rgba(255,255,255,0.8);
   --muted: #6b7280;
   --accent-a: #637df1;
@@ -38,6 +38,8 @@
   box-shadow: 0 8px 24px rgba(123,108,255,0.3);
 }
 
+
+
 .app.dark {
   --bg: #0d1117;
   --card: #161b22; 
@@ -68,7 +70,7 @@
 .app.dark textarea,
 .app.dark .j-textarea {
   background: #0f1318;
-  color: #e6e9f0;
+  color: #e9e6f0;
   border-color: rgba(255,255,255,0.08);
 }
 
@@ -83,8 +85,8 @@
 .app.dark .save-entry-btn,
 .app.dark .btn-primary,
 .app.dark .nav-link.active {
-  background: linear-gradient(90deg, #7b6cff, #6a5cf8) !important;
-  color: white !important;
+  background: linear-gradient(90deg, #776aeb, #bc5cf8) !important;
+  color: rgb(255, 255, 255) !important;
   box-shadow: 0 8px 20px rgba(107,94,255,0.24);
 }
 
@@ -121,6 +123,50 @@
   transition: background .25s ease, color .25s ease;
 }
 
+.app.dark .j-header{
+  background: #16122a;  
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+
+ 
+.app.dark .j-entry-card {
+  background: #16122a;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+.app.dark .j-empty-state {
+  background: #16122a;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+.app.dark .j-confirm-card  {
+  background: #16122a;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+.app.dark .L-hero { 
+  backdrop-filter: blur(10px); 
+  color: #ffffff;
+}
+.app.dark .l-rankcard {
+  background: #16122a;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+.app.dark .  {
+  background: #16122a;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+  color: #f0f3f7;
+}
+
+
 /* DARK MODE TOPBAR OVERRIDE */
 .app.dark .topbar {
   background: rgba(22,27,34,0.6); /* smooth glass */
@@ -147,7 +193,7 @@ body{ font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto; }
 }
 .topbar.dark{ background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); }
 .topbar-inner{ display:flex; align-items:center; gap:20px; justify-content:space-between; }
-.brand{ font-weight:800; font-size:24px; color:var(--accent-a); letter-spacing:0.5px; }
+.brand{ font-weight:800; font-size:24px; color:#584caa; letter-spacing:0.5px; }
 
 .top-nav{ display:flex; gap:18px; align-items:center; }
 .nav-link{ background:transparent; border:none; padding:8px 12px; border-radius:12px; font-weight:600; cursor:pointer; color:inherit; }

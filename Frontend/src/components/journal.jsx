@@ -1,553 +1,601 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Smile, Frown, Meh } from "lucide-react";
+import { api, API_BASE } from "../services/api.js";
+import "./journal.css";
 
 const POSITIVE_LEX = {
-  good: 1, great: 1.4, excellent: 1.7, happy: 1.3, joy: 1.2, fun: 1.1,
-  enjoyed: 1.2, loved: 1.5, proud: 1.3, calm: 0.9, relaxed: 0.9, uplifted: 1.1,
-  excited: 1.3, energized: 1.2, grateful: 1.4, productive: 1.2, success: 1.5
+  good: 1.0, great: 1.4, excellent: 1.8, amazing: 1.8, awesome: 1.6,
+  happy: 1.3, joyful: 1.5, joy: 1.3, fun: 1.1, enjoyed: 1.3,
+  loved: 1.7, like: 1.1, satisfied: 1.2, content: 1.1,
+  proud: 1.4, confident: 1.3, motivated: 1.3,
+  calm: 1.0, relaxed: 1.0, peaceful: 1.2,
+  excited: 1.4, thrilled: 1.6, energetic: 1.3, energized: 1.3,
+  grateful: 1.5, thankful: 1.4, blessed: 1.5,
+  productive: 1.3, focused: 1.2, efficient: 1.2,
+  success: 1.6, successful: 1.6, progress: 1.3, improvement: 1.3,
+  inspired: 1.4, creative: 1.2, hopeful: 1.3, optimistic: 1.4,
+  happiness: 1.5, happyness: 1.5,
+  family: 1.2, together: 1.1,
+  played: 1.1, playing: 1.1, games: 0.9,
+  laugh: 1.4, laughed: 1.4, laughing: 1.4,
+  enjoy: 1.3, enjoying: 1.3, enjoyable: 1.3,
+  wonderful: 1.6, fantastic: 1.6, lovely: 1.4,
+  nice: 1.1, glad: 1.2, cheerful: 1.3,
+  celebrate: 1.4, celebration: 1.4,
+  love: 1.6, loving: 1.5,
+  opportunity: 1.2, finally: 1.1, better: 1.1, best: 1.4,
+  learning: 1.1, learned: 1.1, achieved: 1.4, winning: 1.3,
+  relieved: 1.2, refreshed: 1.2, recovered: 1.1,
+  comfortable: 1.0, safe: 1.0, healthy: 1.2,
+  accomplished: 1.6, fulfilled: 1.5,
 };
 
 const NEGATIVE_LEX = {
-  sad: -1.3, bad: -1.0, angry: -1.4, depressed: -1.7, anxious: -1.4,
-  scared: -1.3, upset: -1.2, stressed: -1.4, lonely: -1.2, teased: -1.1,
-  yelled: -1.3, shouted: -1.3, "shouted at": -1.4, hate: -1.6, frustrated: -1.3,
-  insult: -1.2, bullied: -1.6, sick: -1.1, hurt: -1.3, disappointed: -1.2
+  bad: -1.0, worse: -1.4, terrible: -1.8, awful: -1.7, horrible: -1.8,
+  sad: -1.4, unhappy: -1.3, depressed: -1.9, hopeless: -1.7,
+  angry: -1.5, furious: -1.8, annoyed: -1.2, irritated: -1.2,
+  anxious: -1.5, worried: -1.3, nervous: -1.2,
+  scared: -1.4, afraid: -1.4,
+  upset: -1.3, hurt: -1.4, disappointed: -1.3, regret: -1.3,
+  stressed: -1.5, overwhelmed: -1.6, exhausted: -1.4, tired: -1.1,
+  lonely: -1.3, isolated: -1.4,
+  frustrated: -1.4, stuck: -1.2,
+  hate: -1.8, dislike: -1.2,
+  insulted: -1.3, bullied: -1.7,
+  sick: -1.2, unwell: -1.2, pain: -1.4,
+  argument: -1.4, conflict: -1.3, wrong: -1.1, mistake: -1.2,
+  failed: -1.5, failure: -1.5, lost: -1.2, losing: -1.2,
+  crying: -1.4, cried: -1.4, broke: -1.2, broken: -1.3,
+  miss: -1.0, missing: -1.0, confused: -1.1, useless: -1.5,
 };
 
-const INTENSIFIERS = { very: 1.25, really: 1.2, extremely: 1.4, so: 1.15, super: 1.25 };
-const DAMPENERS = { slightly: 0.85, somewhat: 0.9, abit: 0.9, "a bit": 0.9 };
-const NEGATIONS = new Set(["not","no","never","n't","none","cannot","can't"]);
+const INTENSIFIERS = {
+  very: 1.3, really: 1.25, extremely: 1.5,
+  so: 1.2, super: 1.3, incredibly: 1.5,
+  highly: 1.3, deeply: 1.4,
+};
 
-function splitSentences(text){
-  if(!text) return [];
-  const safe = text.replace(/\n/g, ". ");
-  return safe.split(/(?<=[.?!])\s+/).map(s=>s.trim()).filter(Boolean);
+const DAMPENERS = {
+  slightly: 0.8, somewhat: 0.85, abit: 0.85,
+  "a bit": 0.85, little: 0.85, mildly: 0.8,
+  kinda: 0.9, sortof: 0.9,
+};
+
+const NEGATIONS = new Set([
+  "not", "no", "never", "none",
+  "n't", "cannot", "can't",
+  "dont", "don't", "won't", "didn't",
+]);
+
+function splitSentences(text) {
+  if (!text) return [];
+  return text.replace(/\n/g, ". ").split(/(?<=[.?!])\s+/).map(s => s.trim()).filter(Boolean);
 }
-function simpleTokens(sentence){
-  return sentence.toLowerCase().replace(/[“”"()——,:;\/]/g," ").split(/\s+/).filter(Boolean);
+
+function simpleTokens(s) {
+  return s.toLowerCase().replace(/[""\\"()——,:;\/]/g, " ").split(/\s+/).filter(Boolean);
 }
-function scoreSentence(sentence){
+
+function scoreSentence(sentence) {
   const tokens = simpleTokens(sentence);
-  let score = 0, posHits = [], negHits = [];
-  let i = 0;
-  while(i < tokens.length){
-    const w = tokens[i];
-    const two = i+1 < tokens.length ? `${w} ${tokens[i+1]}` : null;
-    if(two && NEGATIVE_LEX[two] !== undefined){
-      const val = NEGATIVE_LEX[two];
-      negHits.push({word: two, val}); score += val; i += 2; continue;
+  let score = 0, posHits = [], negHits = [], i = 0;
+  while (i < tokens.length) {
+    const w = tokens[i], two = i + 1 < tokens.length ? `${w} ${tokens[i + 1]}` : null;
+    if (two && NEGATIVE_LEX[two] !== undefined) {
+      negHits.push({ word: two, val: NEGATIVE_LEX[two] }); score += NEGATIVE_LEX[two]; i += 2; continue;
     }
-    if(INTENSIFIERS[w]){
-      const nxt = tokens[i+1];
-      if(nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])){
-        const base = (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt]);
-        const adj = base * INTENSIFIERS[w];
-        if(base > 0) posHits.push({word:nxt,val:adj}); else negHits.push({word:nxt,val:adj});
-        score += adj; i += 2; continue;
+    if (INTENSIFIERS[w]) {
+      const nxt = tokens[i + 1];
+      if (nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])) {
+        const base = POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt], adj = base * INTENSIFIERS[w];
+        (base > 0 ? posHits : negHits).push({ word: nxt, val: adj }); score += adj; i += 2; continue;
       }
     }
-    if(NEGATIONS.has(w)){
-      const nxt = tokens[i+1];
-      if(nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])){
-        const base = (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt]);
-        const flipped = -base * 0.95;
-        if(flipped > 0) posHits.push({word:nxt,val:flipped}); else negHits.push({word:nxt,val:flipped});
-        score += flipped; i += 2; continue;
+    if (NEGATIONS.has(w)) {
+      const nxt = tokens[i + 1];
+      if (nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])) {
+        const base = POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt], flipped = -base * 0.95;
+        (flipped > 0 ? posHits : negHits).push({ word: nxt, val: flipped }); score += flipped; i += 2; continue;
       }
     }
-    if(POSITIVE_LEX[w]){ posHits.push({word:w,val:POSITIVE_LEX[w]}); score += POSITIVE_LEX[w]; }
-    else if(NEGATIVE_LEX[w]){ negHits.push({word:w,val:NEGATIVE_LEX[w]}); score += NEGATIVE_LEX[w]; }
-    else if(DAMPENERS[w]){
-      const nxt = tokens[i+1];
-      if(nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])){
-        const base = (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt]);
-        const adj = base * DAMPENERS[w];
-        if(base > 0) posHits.push({word:nxt,val:adj}); else negHits.push({word:nxt,val:adj});
-        score += adj; i += 2; continue;
+    if (POSITIVE_LEX[w]) { posHits.push({ word: w, val: POSITIVE_LEX[w] }); score += POSITIVE_LEX[w]; }
+    else if (NEGATIVE_LEX[w]) { negHits.push({ word: w, val: NEGATIVE_LEX[w] }); score += NEGATIVE_LEX[w]; }
+    else if (DAMPENERS[w]) {
+      const nxt = tokens[i + 1];
+      if (nxt && (POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt])) {
+        const base = POSITIVE_LEX[nxt] || NEGATIVE_LEX[nxt], adj = base * DAMPENERS[w];
+        (base > 0 ? posHits : negHits).push({ word: nxt, val: adj }); score += adj; i += 2; continue;
       }
     }
     i++;
   }
-  const punctBoost = (sentence.match(/!/g) || []).length * 0.15;
-  score = score * (1 + punctBoost);
-  const polarity = score > 0 ? "positive": score < 0 ? "negative" : "neutral";
-  return { score, polarity, positives: posHits, negatives: negHits, text: sentence.trim() };
+  score *= 1 + (sentence.match(/!/g) || []).length * 0.15;
+  return { score, positives: posHits, negatives: negHits, text: sentence.trim() };
 }
 
-function mapTo7(avgScore){
-  const min=-3.5,max=3.5;
-  const norm = (avgScore - min) / (max - min);
-  const scaled = Math.round(norm*6)+1;
-  return Math.max(1, Math.min(7, scaled));
+function mapTo7(avg) {
+  if (avg >= 2.5)  return 10;
+  if (avg >= 1.8)  return 9;
+  if (avg >= 1.2)  return 8;
+  if (avg >= 0.7)  return 7; 
+  if (avg >= 0.3)  return 6;
+  if (avg >= 0.1)  return 5;
+  if (avg >= -0.1) return 4;
+  if (avg >= -0.6) return 3;
+  if (avg >= -1.2) return 2;
+  return 1;
 }
 
 const LEVEL_LABELS = {
-  1: "Bad Day",
-  2: "No Luck",
-  3: "Neutral",
-  4: "Vibing Day",
-  5: "Good Day",
-  6: "Great Day",
-  7: "Excellent Day"
+  1: "Overwhelmed", 2: "Heavy", 3: "BurnOut",
+  4: "Neutral", 5: "Content", 6: "Positive",
+  7: "Happy", 8: "Accomplished", 9: "Fulfilled", 10: "Euphoric",
 };
 
-function generateSummaryFromEvents(events, overallLevel){
-  const negs = events.filter(e=>e.score<0).sort((a,b)=>a.score-b.score);
-  const poss = events.filter(e=>e.score>0).sort((a,b)=>b.score-a.score);
-  const topNeg = negs.slice(0,2).map(e=>e.text);
-  const topPos = poss.slice(0,2).map(e=>e.text);
-  let summaryParts = [];
-  if(topPos.length && topNeg.length) summaryParts.push(`You had both positive moments and stressful ones today — for example, ${topPos.join("; ")} but also ${topNeg.join("; ")}.`);
-  else if(topNeg.length) summaryParts.push(`Today had several difficult moments such as ${topNeg.join("; ")}.`);
-  else if(topPos.length) summaryParts.push(`Today included some nice moments like ${topPos.join("; ")}.`);
-  else summaryParts.push("Today was fairly neutral with no strongly emotional events recorded.");
-  let interp = "";
-  const lvl = overallLevel;
-  if(lvl >= 6) interp = "Overall you seem to have had a really positive day — nice!";
-  else if(lvl === 5) interp = "Overall the day was good and balanced.";
-  else if(lvl === 4) interp = "Overall it looks like a vibing/neutral day with ups and downs.";
-  else if(lvl === 3) interp = "Overall the day felt neutral.";
-  else if(lvl === 2) interp = "Overall the day leaned negative — some unlucky or stressful moments.";
-  else interp = "Overall this was a difficult day and it's okay to feel that.";
-  const adviceTemplates = {
-    positive: [
-      "Keep this momentum — little routines help keep good days steady.",
-      "Nice day — celebrate the wins, even if small."
-    ],
-    neutral: [
-      "A neutral day is a good chance to rest and reset for tomorrow.",
-      "Small regenerating actions (walk, nap, water) can tilt the next day positively."
-    ],
-    negative: [
-      "It’s okay — hard moments pass. Try to breathe, rest, and do one small caring thing for yourself.",
-      "Don't be harsh on yourself; reach out to someone you trust or take a short break."
-    ]
-  };
-  let advicePool = lvl >= 5 ? adviceTemplates.positive : lvl === 3 || lvl === 4 ? adviceTemplates.neutral : adviceTemplates.negative;
-  const advice = advicePool[Math.floor(Math.random()*advicePool.length)];
-  return { summary: summaryParts.join(" "), interpretation: interp, advice };
+const MOOD_CONFIG = {
+  Overwhelmed:  { color: "#7f1d1d", bg: "rgba(127,29,29,0.08)",  bar: "#7f1d1d" },
+  Heavy:          { color: "#1d4ed8", bg: "rgba(29,78,216,0.08)",  bar: "#1d4ed8" },
+  BurnOut:   { color: "#b45309", bg: "rgba(180,83,9,0.08)",   bar: "#b45309" },
+  Neutral:      { color: "#4b5563", bg: "rgba(75,85,99,0.08)",   bar: "#4b5563" },
+  Content:      { color: "#0f766e", bg: "rgba(15,118,110,0.08)", bar: "#0f766e" },
+  Positive:     { color: "#047857", bg: "rgba(4,120,87,0.08)",   bar: "#047857" },
+  Happy:        { color: "#15803d", bg: "rgba(21,128,61,0.08)",  bar: "#15803d" },
+  Accomplished: { color: "#0369a1", bg: "rgba(3,105,161,0.08)",  bar: "#0369a1" },
+  Fulfilled:    { color: "#7c3aed", bg: "rgba(124,58,237,0.08)", bar: "#7c3aed" },
+  Euphoric:     { color: "#6d28d9", bg: "rgba(109,40,217,0.08)", bar: "#6d28d9" },
+};
+
+function generateSummary(events, level) {
+  const negs = events.filter(e => e.score < 0).sort((a, b) => a.score - b.score).slice(0, 2).map(e => e.text);
+  const poss = events.filter(e => e.score > 0).sort((a, b) => b.score - a.score).slice(0, 2).map(e => e.text);
+  let summary = negs.length && poss.length
+    ? `You had both positive moments and stressful ones today — ${poss.join("; ")} but also ${negs.join("; ")}.`
+    : negs.length ? `Today had some difficult moments: ${negs.join("; ")}.`
+      : poss.length ? `Today included some nice moments: ${poss.join("; ")}.`
+        : "Today was fairly neutral with no strongly emotional events recorded.";
+  const interp = level >= 6 ? "Overall a really positive day — nice!"
+    : level === 5 ? "Overall the day was good and balanced."
+      : level === 4 ? "Overall it looks like a neutral day."
+        : level === 3 ? "Overall the day felt a bit tough."
+          : "Overall this was a difficult day and it's okay to feel that.";
+  const pool = level >= 5
+    ? ["Keep this momentum — little routines help keep good days steady.", "Nice day — celebrate the wins, even if small."]
+    : level >= 3
+      ? ["A neutral day is a good chance to rest and reset for tomorrow.", "Small regenerating actions (walk, nap, water) can tilt the next day positively."]
+      : ["It's okay — hard moments pass. Try to breathe, rest, and do one small caring thing for yourself.", "Don't be harsh on yourself; reach out to someone you trust."];
+  return { summary, interpretation: interp, advice: pool[Math.floor(Math.random() * pool.length)] };
 }
 
-const MoodIcon = ({ mood }) => {
-  if (mood === "Happy") return <Smile size={16} color="#22c55e" />;
-  if (mood === "Sad") return <Frown size={16} color="#ef4444" />;
-  return <Meh size={16} color="#94a3b8" />;
-};
+function localAnalyze(text) {
+  const events = splitSentences(text).map(s => scoreSentence(s));
+  let total = 0, weight = 0;
+  events.forEach((ev, i) => { const w = 1 + i * 0.05; total += ev.score * w; weight += w; });
+  const mapped = mapTo7(weight ? total / weight : 0);
+  return { label: LEVEL_LABELS[mapped], score: mapped, events, ...generateSummary(events, mapped) };
+}
 
-const API_BASE = "http://127.0.0.1:8000";
+const cfg = (label) => MOOD_CONFIG[label] || MOOD_CONFIG.Neutral;
 
-//  Component
-export default function Journal({
-  entries = [],
-  todayText,
-  setTodayText,
-  saveEntry,    
-  addEntry,     
-  deleteEntry
-}) {
-  // local UI state
+function MoodBadge({ label }) {
+  const c = cfg(label);
+  return (
+    <div className="j-mood-badge" style={{ background: c.bg, border: `1.5px solid ${c.color}22`, color: c.color }}>
+      {label}
+    </div>
+  );
+}
+
+function MoodBar({ score }) {
+  const c = cfg(LEVEL_LABELS[score] || "Neutral");
+  return (
+    <div className="j-mood-bar-wrap">
+      <div className="j-mood-bar-track">
+        <div className="j-mood-bar-fill" style={{ width: `${((score - 1) / 9) * 100}%`, background: c.bar }} />
+      </div>
+      <span className="j-mood-bar-label" style={{ color: c.color }}>{score}/10</span>
+    </div>
+  );
+}
+
+function StatCard({ label, value, accent, darkMode }) {
+  return (
+    <div className={`j-stat-card ${darkMode ? "dark" : ""}`}>
+      <span className="j-stat-label">{label}</span>
+      <span className="j-stat-value">{value}</span>
+    </div>
+  );
+}
+
+export default function Journal({ entries = [], todayText, setTodayText, saveEntry, addEntry, deleteEntry, refreshEntries, currentUser }) {
+
+  const draftKey = `draftEntries_${currentUser?.id || "guest"}`;
+
   const [localEntries, setLocalEntries] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("entries")) || []; } catch { return []; }
+    try {
+      const todayIso = new Date().toISOString().split("T")[0];
+      const drafts = JSON.parse(localStorage.getItem(draftKey)) || [];
+      return drafts.filter(e => e.dateOnly === todayIso);
+    } catch { return []; }
   });
-  const [imageFiles, setImageFiles] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]); 
-  const [audioFile, setAudioFile] = useState(null);
-  const [audioPreview, setAudioPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [summaryOpen, setSummaryOpen] = useState(false);
-  const [generated, setGenerated] = useState(null); 
-  const [extraText, setExtraText] = useState("");
 
+  const [imageFiles, setImageFiles]       = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [audioFile, setAudioFile]         = useState(null);
+  const [audioPreview, setAudioPreview]   = useState(null);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState("");
+  const [summaryOpen, setSummaryOpen]     = useState(false);
+  const [generated, setGenerated]         = useState(null);
+  const [expandedEntry, setExpandedEntry] = useState(null);
+
+  // Reload correct drafts when the logged-in user changes
   useEffect(() => {
-    if (entries && entries.length) {
-      setLocalEntries(entries);
-      try { localStorage.setItem("entries", JSON.stringify(entries)); } catch {}
-    }
-  }, [entries]);
+    try {
+      const todayIso = new Date().toISOString().split("T")[0];
+      const drafts = JSON.parse(localStorage.getItem(draftKey)) || [];
+      setLocalEntries(drafts.filter(e => e.dateOnly === todayIso));
+    } catch { setLocalEntries([]); }
+  }, [draftKey]);
 
-  const todayIso = new Date().toISOString().split("T")[0];
+  useEffect(() => () => {
+    imagePreviews.forEach(u => URL.revokeObjectURL(u));
+    if (audioPreview) URL.revokeObjectURL(audioPreview);
+  }, []); // eslint-disable-line
+
+  const todayIso   = new Date().toISOString().split("T")[0];
   const todaysEntries = (localEntries || []).filter(e => e.dateOnly === todayIso);
 
   const combinedText = useMemo(() => {
-    const base = todaysEntries.map(e=>e.text || "").join(". ");
-    const extra = todayText ? `. ${todayText}` : "";
-    return (base + extra).trim();
+    const base = todaysEntries.map(e => e.text || "").join(". ");
+    return (base + (todayText ? `. ${todayText}` : "")).trim();
   }, [todaysEntries, todayText]);
 
   const detected = useMemo(() => {
-    if (!combinedText) return { label: "Not analyzed", score: null };
-    const sentences = splitSentences(combinedText);
-    const events = sentences.map(s => {
-      const sc = scoreSentence(s);
-      return { text: s, score: sc.score, positives: sc.positives, negatives: sc.negatives };
-    });
+    const savedText = todaysEntries.map(e => e.text || "").join(". ").trim();
+    if (!savedText) return { label: "Neutral", score: 4 };
+    const events = splitSentences(savedText).map(s => scoreSentence(s));
     let total = 0, weight = 0;
-    events.forEach((ev,i)=>{ const w = 1 + i*0.05; total += ev.score * w; weight += w; });
-    const avg = weight ? total/weight : 0;
-    const mapped = mapTo7(avg);
-    return { label: LEVEL_LABELS[mapped], score: mapped };
-  }, [combinedText]);
+    events.forEach((ev, i) => { const w = 1 + i * 0.05; total += ev.score * w; weight += w; });
+    const score = mapTo7(weight ? total / weight : 0);
+    return { label: LEVEL_LABELS[score], score };
+  }, [todaysEntries]);
 
-  // helpers to preview files
-  useEffect(() => {
-    return () => {
-      // revoke object URLs when component unmounts
-      imagePreviews.forEach(url => URL.revokeObjectURL(url));
-      if(audioPreview) URL.revokeObjectURL(audioPreview);
-    };
-  }, [imagePreviews, audioPreview]);
+  const moodCfg  = cfg(detected.label);
+  const wordCount = (todayText || "").trim().split(/\s+/).filter(Boolean).length;
+  const todayLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   const onSelectImages = (files) => {
     if (!files) return;
-    const arr = Array.from(files).slice(0, 6); // limit 6
-    const prev = arr.map(f => URL.createObjectURL(f));
-    setImageFiles(prevFiles => [...prevFiles, ...arr]);
-    setImagePreviews(prev => [...prev, ...prev]);
+    const arr = Array.from(files).slice(0, 6);
+    setImageFiles(p => [...p, ...arr]);
+    setImagePreviews(p => [...p, ...arr.map(f => URL.createObjectURL(f))]);
   };
-
   const onSelectAudio = (file) => {
     if (!file) return;
     setAudioFile(file);
     setAudioPreview(URL.createObjectURL(file));
   };
-
   const removeImageAt = (idx) => {
-    setImageFiles(prev => prev.filter((_,i)=>i!==idx));
-    setImagePreviews(prev => prev.filter((_,i)=>i!==idx));
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setImageFiles(p => p.filter((_, i) => i !== idx));
+    setImagePreviews(p => p.filter((_, i) => i !== idx));
   };
-  const clearAudio = () => { if(audioPreview) URL.revokeObjectURL(audioPreview); setAudioFile(null); setAudioPreview(null); };
+  const clearAudio = () => {
+    if (audioPreview) URL.revokeObjectURL(audioPreview);
+    setAudioFile(null);
+    setAudioPreview(null);
+  };
 
-  // upload helpers: upload each image/audio to server -> returns path(s)
-  async function uploadImagesToServer(files){
+  async function uploadImages(files) {
     const paths = [];
-    for(const f of files){
+    for (const f of files) {
       const fd = new FormData();
       fd.append("file", f, f.name);
-      try{
-        const res = await fetch(`${API_BASE}/upload/image`, { method: "POST", body: fd });
-        if(!res.ok) throw new Error("upload failed");
-        const j = await res.json();
-        // server returns { path: "/uploads/images/filename" }
-        paths.push(j.path);
-      }catch(err){
-        console.error("image upload failed", err);
-      }
+      try {
+        const res = await api.post("/entries/upload/image", fd, { headers: { "Content-Type": "multipart/form-data" } });
+        paths.push(res.data.path);
+      } catch (err) { console.error("image upload failed", err); }
     }
     return paths;
   }
-  async function uploadAudioToServer(file){
-    if(!file) return null;
+
+  async function uploadAudio(file) {
+    if (!file) return null;
     const fd = new FormData();
     fd.append("file", file, file.name);
-    try{
-      const res = await fetch(`${API_BASE}/upload/audio`, { method: "POST", body: fd });
-      if(!res.ok) throw new Error("upload failed");
-      const j = await res.json();
-      return j.path;
-    }catch(err){
-      console.error("audio upload failed", err);
-      return null;
-    }
+    try {
+      const res = await api.post("/entries/upload/audio", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      return res.data.path;
+    } catch (err) { console.error("audio upload failed", err); return null; }
   }
 
-  // save one entry locally (uploads media first, then creates entry object)
   const createLocalEntry = async () => {
     setError(""); setLoading(true);
     try {
-      if(!todayText.trim()){ setError("Write something before saving an entry."); setLoading(false); return; }
-
-      // upload media
-      const imagePaths = await uploadImagesToServer(imageFiles);
-      const audioPath = audioFile ? await uploadAudioToServer(audioFile) : null;
-
-      // run local analysis on this entry
-      const analysis = (function localAnalyze(text){
-        const sentences = splitSentences(text);
-        const events = sentences.map(s=>scoreSentence(s));
-        let total=0, weight=0;
-        events.forEach((ev,i)=>{ const w=1+i*0.05; total+=ev.score*w; weight+=w; });
-        const avg = weight ? total/weight : 0;
-        const mapped = mapTo7(avg);
-        const pack = generateSummaryFromEvents(events, mapped);
-        return { label: LEVEL_LABELS[mapped], score: mapped, summary: pack.summary, advice: pack.advice };
-      })(todayText);
-
-      const now = new Date();
-      const newEntry = {
-        id: Date.now(),
-        date: now.toLocaleString(),
+      if (!todayText.trim()) { setError("Write something before saving an entry."); setLoading(false); return; }
+      const imagePaths = await uploadImages(imageFiles);
+      const audioPath  = await uploadAudio(audioFile);
+      const analysis   = localAnalyze(todayText);
+      const now        = new Date();
+      const newEntry   = {
+        id:       Date.now(),
+        date:     now.toLocaleString(),
         dateOnly: now.toISOString().split("T")[0],
-        text: todayText,
-        mood: analysis.label,
-        images: imagePaths || [],
-        audio: audioPath || null,
-        confirmed: false
+        text:     todayText,
+        mood:     analysis.label,
+        images:   imagePaths || [],
+        audio:    audioPath  || null,
       };
-
-      // update local state & localStorage
       const updated = [newEntry, ...localEntries];
       setLocalEntries(updated);
-      try { localStorage.setItem("entries", JSON.stringify(updated)); } catch(e){ console.warn("localStorage set failed", e); }
-
-      // call parent addEntry if provided (keeps compatibility)
-      if(typeof addEntry === "function"){
-        try{ addEntry(newEntry); }catch(e){/*ignore*/ }
-      }
-
-      // clear draft & previews
-      setTodayText("");
-      setImageFiles([]); setImagePreviews([]);
-      clearAudio();
-    } catch(err){
+      localStorage.setItem(draftKey, JSON.stringify(updated));
+    } catch (err) {
       console.error("createLocalEntry failed", err);
-      setError("Failed to save entry locally.");
+      setError("Failed to save entry.");
     } finally {
-      setLoading(false);
+      setTodayText(""); setImageFiles([]); setImagePreviews([]); clearAudio(); setLoading(false);
     }
   };
 
-  // generate summary from combined text (today's entries + draft)
   const handleGenerateSummary = () => {
     setError("");
     const src = combinedText.trim();
-    if(!src){ setError("Nothing to summarize — write or save entries first."); return; }
-    // analyze combined text
-    const sentences = splitSentences(src);
-    const events = sentences.map(s => {
-      const sc = scoreSentence(s);
-      return { text: s, score: sc.score, positives: sc.positives, negatives: sc.negatives };
+    if (!src) { setError("Write or save at least one entry first."); return; }
+    const a = localAnalyze(src);
+    const topNeg = a.events.filter(e => e.score < 0).slice(0, 2).map(e => e.text);
+    const topPos = a.events.filter(e => e.score > 0).slice(0, 2).map(e => e.text);
+    const parts = [];
+    if (topNeg.length) parts.push(`Negatives: ${topNeg.join("; ")}`);
+    if (topPos.length) parts.push(`Positives: ${topPos.join("; ")}`);
+    setGenerated({
+      score:   a.score,
+      label:   a.label,
+      summary: a.summary + " " + a.interpretation,
+      advice:  a.advice,
+      reason:  parts.join(" | ") || "Balanced — no strong signals.",
+      events:  a.events,
     });
-    let total = 0, weight = 0;
-    events.forEach((ev,i)=>{ const w = 1 + i*0.05; total += ev.score * w; weight += w; });
-    const avg = weight ? total/weight : 0;
-    const mapped = mapTo7(avg);
-    const packSummary = generateSummaryFromEvents(events, mapped);
-    const pack = {
-      score: mapped,
-      label: LEVEL_LABELS[mapped],
-      summary: packSummary.summary + " " + packSummary.interpretation,
-      advice: packSummary.advice,
-      reason: (() => {
-        const topNeg = events.filter(e=>e.score<0).slice(0,2).map(e=>e.text);
-        const topPos = events.filter(e=>e.score>0).slice(0,2).map(e=>e.text);
-        const parts=[]; if(topNeg.length) parts.push(`Negatives: ${topNeg.join("; ")}`); if(topPos.length) parts.push(`Positives: ${topPos.join("; ")}`); return parts.join(" | ") || "Balanced/no strong signals.";
-      })(),
-      events
-    };
-    setGenerated(pack);
     setSummaryOpen(true);
   };
 
-const handleConfirmAndSave = async () => {
-  setLoading(true);
-  setError("");
-  try {
-    // mark today's entries confirmed
-    const updated = localEntries.map(e => 
-      e.dateOnly === todayIso ? { ...e, confirmed: true } : e
-    );
+  const handleConfirmAndSave = async () => {
+    setLoading(true); setError("");
+    try {
+      if (!localEntries.length) { setError("No entries to save for today."); setLoading(false); return; }
+      for (const e of localEntries) {
+        await api.post("/entries/save", {
+          text:     e.text,
+          images:   e.images  || [],
+          audio:    e.audio   || null,
+          dateOnly: e.dateOnly,
+        });
+      }
+      setLocalEntries([]);
+      localStorage.removeItem(draftKey);
+      setSummaryOpen(false);
+      if (typeof refreshEntries === "function") refreshEntries();
+      alert("Saved to server! Your entries are now accessible on any device.");
+    } catch (err) {
+      console.error("confirm save failed", err);
+      setError("Failed to save to server. Is the backend running?");
+    } finally { setLoading(false); }
+  };
 
-    // POST to server (CORRECT FORMAT)
-    const res = await fetch(`${API_BASE}/save_entries`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entries: updated }),
-    });
-
-    if (!res.ok) throw new Error("server save failed");
-
-    // update local state & storage
-    setLocalEntries(updated);
-    localStorage.setItem("entries", JSON.stringify(updated));
-
-    setSummaryOpen(false);
-    alert("✅ Saved to server!");
-
-  } catch (err) {
-    console.error("confirm save failed", err);
-    setError("Failed to save to server. Check backend and CORS.");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // simple delete entry (local)
   const handleDelete = (id) => {
     const updated = localEntries.filter(e => e.id !== id);
     setLocalEntries(updated);
-    try { localStorage.setItem("entries", JSON.stringify(updated)); } catch {}
-    if(typeof deleteEntry === "function") deleteEntry(id);
+    localStorage.setItem(draftKey, JSON.stringify(updated));
   };
 
-  // render
   return (
-    <section className="page journal-page">
-      <div className="journal-top" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12}}>
-        <div>
-          <h2 style={{margin:0}}>Daily Reflection</h2>
-          <p className="muted" style={{margin:0}}>Auto mood detection · Local summaries · Server-backed storage</p>
-        </div>
+    <>
+      <div className="j-page">
 
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <div className="mood-pill" title="Detected mood" style={{display:"flex",gap:8,alignItems:"center",padding:"6px 10px",borderRadius:999,background:"linear-gradient(90deg,#fff,#f7f8fb)",border:"1px solid rgba(15,23,42,0.04)",fontWeight:700}}>
-            <MoodIcon mood={detected.label === "Excellent Day" || detected.label === "Great Day" || detected.label === "Good Day" ? "Happy" : detected.label === "Bad Day" || detected.label === "No Luck" ? "Sad" : "Neutral"} />
-            <span style={{fontWeight:700}}>{detected.label}</span>
-          </div>
-
-          <button className="btn-ghost" onClick={handleGenerateSummary} disabled={!combinedText.trim()}>
-            Summary
-          </button>
-        </div>
-      </div>
-
-      {/* summary stats */}
-      <div className="daily-summary" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginTop:14}}>
-        <div className="card small"><h4>Today's Mood</h4><div className="big">{detected.label}</div></div>
-        <div className="card small"><h4>Entries Today</h4><div className="big">{todaysEntries.length}</div></div>
-        <div className="card small"><h4>Draft Words</h4><div className="big">{(todayText||"").trim().split(/\s+/).filter(Boolean).length}</div></div>
-      </div>
-
-      {/* write card */}
-      <div className="card write-card" style={{marginTop:14}}>
-        <h3 style={{marginTop:0}}>How are you feeling?</h3>
-        <textarea className="j-textarea" placeholder="Write freely..." value={todayText} onChange={(e)=> setTodayText(e.target.value)} style={{width:"100%",minHeight:120,padding:12,borderRadius:10,border:"1px solid rgba(15,23,42,0.06)"}} />
-
-        <div className="attachments-row" style={{display:"flex",gap:12,alignItems:"center",marginTop:12}}>
-          <label className="file-btn" style={{cursor:"pointer"}}>
-            <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={(e)=> onSelectImages(e.target.files)} />
-            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>Add images</span>
-          </label>
-
-          <label className="file-btn" style={{cursor:"pointer"}}>
-            <input type="file" accept="audio/*" style={{display:"none"}} onChange={(e)=> onSelectAudio(e.target.files[0])} />
-            <span className="file-btn-inner" style={{display:"inline-flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,background:"rgba(0,0,0,0.03)"}}>Add audio</span>
-          </label>
-
-          <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
-            <button className="save-entry-btn" onClick={createLocalEntry} disabled={loading}>{loading ? "Saving..." : "Save Entry"}</button>
-            <button className="btn-ghost" onClick={() => { setTodayText(""); setImageFiles([]); setImagePreviews([]); clearAudio(); }}>Clear</button>
-          </div>
-        </div>
-
-        {/* previews */}
-        {imagePreviews.length > 0 && (
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
-            {imagePreviews.map((src, i) => (
-              <div key={i} style={{position:"relative",width:120,height:80,borderRadius:8,overflow:"hidden",boxShadow:"0 6px 18px rgba(0,0,0,0.06)"}}>
-                <img src={src} alt={`img-${i}`} style={{width:"100%",height:"100%",objectFit:"cover"}} />
-                <button onClick={()=> removeImageAt(i)} style={{position:"absolute",right:6,top:6,background:"rgba(0,0,0,0.5)",color:"#fff",border:"none",borderRadius:6,padding:"2px 6px",cursor:"pointer"}}>✕</button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {audioPreview && (
-          <div style={{display:"flex",gap:8,alignItems:"center",marginTop:12}}>
-            <audio controls src={audioPreview} style={{width:280}} />
-            <button className="btn-ghost small" onClick={clearAudio}>Remove</button>
-          </div>
-        )}
-      </div>
-
-      {/* entries feed */}
-      <div className="entries" style={{marginTop:16,display:"grid",gap:12}}>
-        {todaysEntries.length === 0 ? (
-  <div className="card empty">No entries yet — write something to begin.</div>
-) : (
-  todaysEntries.slice().map(entry => (
-            <article key={entry.id} className="entry-card card" style={{padding:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div>
-                  <div style={{fontSize:13,color:"#6b7280"}}>{entry.date}</div>
-                  <div style={{fontWeight:700}}>{entry.mood}</div>
-                </div>
-                <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                  <button className="btn-ghost" onClick={() => { setTodayText(entry.text); /* set previews if stored as paths won't convert back */ }}>
-                    Edit
-                  </button>
-                  <button className="btn-danger" onClick={() => handleDelete(entry.id)}>Delete</button>
-                </div>
-              </div>
-
-              <p style={{marginTop:12}}>{entry.text}</p>
-
-              {entry.images && entry.images.length > 0 && (
-                <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-                  {entry.images.map((p,i) => (
-                    <img key={i} src={`${API_BASE}${p}`} alt={`ent-${entry.id}-${i}`} style={{width:110,height:72,objectFit:"cover",borderRadius:8}} />
-                  ))}
-                </div>
-              )}
-
-              {entry.audio && (
-                <div style={{marginTop:10}}>
-                  <audio controls src={`${API_BASE}${entry.audio}`} style={{width:"100%"}} />
-                </div>
-              )}
-            </article>
-          ))
-        )}
-      </div>
-
-      {/* final confirm area */}
-      <div style={{marginTop:14}} className="card">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        {/* ── Header — no Summary button here anymore ── */}
+        
+        <div className="j-header">
           <div>
-            <h4 style={{margin:0}}>Confirm Today's Entries</h4>
-            <p className="muted" style={{margin:0}}>When you confirm, today's entries are saved to server/data/entries.json.</p>
+            <h1>Daily Reflection</h1>
+            <p className="j-date">{todayLabel}</p>
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <button className="btn-primary" onClick={handleConfirmAndSave} disabled={loading}>{loading ? "Saving..." : "Confirm & Save"}</button>
+          <div className="j-header-right">
+            <MoodBadge label={detected.label}  />
           </div>
+        </div>
+
+        <div className="j-inner">
+
+          {/* Stats */}
+          <div className="j-stats-row">
+            <StatCard label="Today's Mood"  value={detected.label} accent={moodCfg.color} />
+            <StatCard label="Entries Today" value={todaysEntries.length} />
+            <StatCard label="Draft Words"   value={wordCount} />
+          </div>
+
+          {/* Sentiment bar */}
+          {todaysEntries.length > 0 && (
+            <div className="j-sentiment-card">
+              <div className="j-section-label">Day Score</div>
+              <MoodBar score={detected.score} />
+            </div>
+          )}
+
+          {/* Write card */}
+          <div className="j-write-card">
+            <h3 >How are you feeling today?</h3>
+            <textarea
+              className="j-textarea"
+              placeholder="Write freely — no judgement here..."
+              value={todayText}
+              onChange={e => setTodayText(e.target.value)}
+            />
+            <div className="j-attach-row">
+              <label className="j-attach-btn">
+                <input type="file" accept="image/*" multiple onChange={e => onSelectImages(e.target.files)} />
+                Images
+              </label>
+              <label className="j-attach-btn">
+                <input type="file" accept="audio/*" onChange={e => onSelectAudio(e.target.files[0])} />
+                Audio
+              </label>
+              <div className="j-actions-right">
+                <button className="j-btn-ghost" onClick={() => { setTodayText(""); setImageFiles([]); setImagePreviews([]); clearAudio(); }}>
+                  Clear
+                </button>
+                <button className="j-btn-primary" onClick={createLocalEntry} disabled={loading}>
+                  {loading ? "Saving…" : "Save & Analyse"}
+                </button>
+              </div>
+            </div>
+
+            {imagePreviews.length > 0 && (
+              <div className="j-img-previews">
+                {imagePreviews.map((src, i) => (
+                  <div key={i} className="j-img-thumb">
+                    <img src={src} alt="" />
+                    <button className="j-img-remove" onClick={() => removeImageAt(i)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {audioPreview && (
+              <div className="j-audio-preview">
+                <span style={{ fontSize: 18 }}>🎵</span>
+                <audio controls src={audioPreview} />
+                <button className="j-btn-ghost" onClick={clearAudio}>Remove</button>
+              </div>
+            )}
+          </div>
+          
+          {error && <div className="j-error">⚠ {error}</div>}
+          <br />
+
+          {/* Today's entries */}
+          <div className="j-section-label">Today's Entries · {todaysEntries.length}</div>
+
+          {todaysEntries.length === 0 ? (
+            <div className="j-empty-state">
+              <div className="j-empty-icon">✏️</div>
+              No entries yet — write something to begin.
+            </div>
+          ) : todaysEntries.map(entry => {
+            const ec    = cfg(entry.mood);
+            const isExp = expandedEntry === (entry.id || entry._id);
+            return (
+              <div key={entry.id || entry._id} className="j-entry-card" style={{ borderLeft: `3.5px solid ${ec.color}` }}>
+                <div className="j-entry-top">
+                  <div>
+                    <div className="j-entry-mood-row">
+                      <span className="j-entry-mood" style={{ color: ec.color }}>{entry.mood}</span>
+                    </div>
+                    <div className="j-entry-date">{entry.date || new Date(entry.createdAt).toLocaleString()}</div>
+                  </div>
+                  <div className="j-entry-actions">
+                    <button className="j-btn-ghost" onClick={() => setTodayText(entry.text)}>Edit</button>
+                    <button className="j-btn-danger" onClick={() => handleDelete(entry.id || entry._id)}>Delete</button>
+                  </div>
+                </div>
+                <p
+                  className={`j-entry-text ${isExp ? "" : "clamped"}`}
+                  onClick={() => setExpandedEntry(isExp ? null : (entry.id || entry._id))}
+                >
+                  {entry.text}
+                </p>
+                {entry.text.length > 180 && (
+                  <button className="j-read-more" onClick={() => setExpandedEntry(isExp ? null : (entry.id || entry._id))}>
+                    {isExp ? "Show less ↑" : "Read more ↓"}
+                  </button>
+                )}
+                {entry.images?.length > 0 && (
+                  <div className="j-entry-images">
+                    {entry.images.map((p, i) => <img key={i} src={`${API_BASE}${p}`} alt="" />)}
+                  </div>
+                )}
+                {entry.audio && (
+                  <div className="j-entry-audio">
+                    <audio controls src={`${API_BASE}${entry.audio}`} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* ── Confirm card — opens summary modal ── */}
+          <div
+            className="j-confirm-card"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+              border: "2px solid #000000",
+              borderRadius: 15,
+            }}
+          >
+            <div>
+              <div className="j-confirm-title">Confirm Today's Entries</div>
+              <div className="j-confirm-sub">
+                Review your day's mood summary, then save everything to the server permanently.
+              </div>
+            </div>
+            <button
+              className="j-btn-primary"
+              onClick={handleGenerateSummary}
+              disabled={!combinedText.trim() || loading}
+              style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, whiteSpace: "nowrap" }}
+            >
+               Confirm Entries
+            </button>
+          </div>
+
         </div>
       </div>
 
-      {/* Summary modal (apple glass style) */}
-      {summaryOpen && generated && (
-        <div className="glass-overlay" onClick={() => setSummaryOpen(false)} style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:1200,backdropFilter:"blur(10px)"}}>
-          <div className="glass-summary-card" onClick={e=>e.stopPropagation()} style={{width:420,background:"linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.58))",borderRadius:18,padding:20,boxShadow:"0 20px 60px rgba(2,6,23,0.22)",border:"1px solid rgba(255,255,255,0.6)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
-              <div>
-                <h3 style={{margin:0}}>Day Summary</h3>
-                <div className="muted" style={{fontSize:13}}>{new Date().toDateString()}</div>
+      {/* ── Summary Modal — save button is here ── */}
+      {summaryOpen && generated && (() => {
+        const gc = cfg(generated.label);
+        return (
+          <div className="j-overlay" onClick={() => setSummaryOpen(false)}>
+            <div className="j-modal" onClick={e => e.stopPropagation()}>
+              <button className="j-modal-close" onClick={() => setSummaryOpen(false)}>✕</button>
+              <div className="j-modal-header">
+                <div className="j-section-label">Day Summary · {new Date().toDateString()}</div>
+                <h2 style={{ color: gc.color }}>{generated.label}</h2>
               </div>
-
-              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
-                <div className={`score-badge lvl-${generated.score}`} style={{padding:"8px 14px",borderRadius:12,fontWeight:800,color:"#fff"}}>
-                  {generated.label} ({generated.score}/7)
+              <div style={{ marginBottom: 18 }}>
+                <MoodBar score={generated.score} />
+              </div>
+              <div className="j-summary-block" style={{ background: gc.bg }}>
+                <div className="j-section-label" style={{ color: gc.color }}>Overview</div>
+                <p>{generated.summary}</p>
+              </div>
+              <div className="j-advice-block">
+                <div className="j-section-label">Advice</div>
+                <p>{generated.advice}</p>
+              </div>
+              {generated.events.length > 0 && (
+                <div>
+                  <div className="j-section-label">Detected Moments</div>
+                  <div className="j-events-grid">
+                    {generated.events.slice(0, 6).map((ev, i) => (
+                      <div key={i} className={`j-event-item ${ev.score < 0 ? "neg" : ev.score > 0 ? "pos" : "neu"}`}>
+                        {ev.text}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button className="btn-primary" onClick={handleConfirmAndSave}>Yes — that's it</button>
-                  <button className="btn-ghost" onClick={() => { setSummaryOpen(false); }}>There's more</button>
-                </div>
+              )}
+              <p className="j-reason"><strong>Why this score:</strong> {generated.reason}</p>
+              <div className="j-modal-actions">
+                <button className="j-btn-ghost" onClick={() => setSummaryOpen(false)}>Close</button>
+                <button className="j-btn-primary" onClick={handleConfirmAndSave} disabled={loading}>
+                  {loading ? "Saving…" : "Save to server ✓"}
+                </button>
               </div>
             </div>
-
-            <div style={{marginTop:12,borderTop:"1px dashed rgba(15,23,42,0.04)",paddingTop:12}}>
-              <h4 style={{margin:"8px 0"}}>Overview</h4>
-              <p style={{lineHeight:1.6}}>{generated.summary}</p>
-
-              <h4 style={{margin:"8px 0 6px 0"}}>Advice</h4>
-              <p style={{fontWeight:600}}>{generated.advice}</p>
-
-              <h5 style={{marginTop:12,color:"#6b7280",fontSize:13}}>Why we scored it this way</h5>
-              <p style={{color:"#6b7280",fontSize:13}}>{generated.reason}</p>
-
-              <h5 style={{marginTop:10}}>Events detected</h5>
-              <ul style={{listStyle:"none",padding:0,margin:0,display:"grid",gap:6}}>
-                {generated.events.slice(0,6).map((ev,i) => (
-                  <li key={i} style={{padding:"6px 8px",borderRadius:8,background:ev.score<0 ? "rgba(239,68,68,0.06)" : ev.score>0 ? "rgba(34,197,94,0.06)" : "transparent", color: ev.score<0 ? "#7f1d1d" : ev.score>0 ? "#155724" : "#374151"}}>{ev.text}</li>
-                ))}
-              </ul>
-            </div>
-
-            <button onClick={() => setSummaryOpen(false)} style={{position:"absolute",right:12,top:12,background:"transparent",border:"none",fontSize:18}}>✕</button>
           </div>
-        </div>
-      )}
-
-      {error && <div style={{marginTop:12,color:"#7f1d1d"}}>{error}</div>}
-    </section>
+        );
+      })()}
+    </>
   );
 }

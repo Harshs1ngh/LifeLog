@@ -1,30 +1,29 @@
 import React, { useState, useEffect } from "react";
 import "./index.css";
-import axios from "axios";
-import Header from "./components/header";
-import Journal from "./components/journal"; 
-import Insights from "./components/insight";
-import LifeCard from "./components/lifelogs";
+import Header from "./components/header.jsx";
+import Journal from "./components/journal.jsx";
+import Insights from "./components/insight.jsx";
+import LifeCard from "./components/lifelogs.jsx"; 
+import Auth from "./components/Auth.jsx";
+import { api } from "./services/api.js";
+import LeaderboardPage from "./components/Leaderboard.jsx";
+
+export const API_BASE = "http://localhost:5000";
 
 export default function App() {
-
   const [darkMode, setDarkMode] = useState(false);
   const [page, setPage] = useState("journal");
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("user")) || null; } catch { return null; }
+  });
 
-  const [entries, setEntries] = useState([]); 
+  const [entries, setEntries] = useState([]);
   const [todayText, setTodayText] = useState("");
   const [mood, setMood] = useState(null);
 
-  const API = "http://127.0.0.1:8000"; 
-
   const [tasks, setTasks] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("tasks")) || [];
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem("tasks")) || []; } catch { return []; }
   });
-
   const [taskText, setTaskText] = useState("");
   const [taskCategory, setTaskCategory] = useState("Work");
 
@@ -34,58 +33,38 @@ export default function App() {
 
   const addTask = () => {
     if (!taskText.trim()) return;
-    const newTask = {
-      id: Date.now(),
-      text: taskText,
-      done: false,
-      category: taskCategory
-    };
-    setTasks([newTask, ...tasks]);
+    setTasks([{ id: Date.now(), text: taskText, done: false, category: taskCategory }, ...tasks]);
     setTaskText("");
   };
-
-  const toggleTask = (id) =>
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-
-  const deleteTask = (id) =>
-    setTasks(tasks.filter((t) => t.id !== id));
-
-  const clearCompleted = () =>
-    setTasks(tasks.filter((t) => !t.done));
-  
-useEffect(() => {
-  if (darkMode) {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-}, [darkMode]);
+  const toggleTask = (id) => setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const deleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
+  const clearCompleted = () => setTasks(tasks.filter(t => !t.done));
 
   useEffect(() => {
-    const loadFromServer = async () => {
-      try {
-        const res = await fetch(`${API}/get_entries`);
-        const data = await res.json();
+    document.documentElement.classList.toggle("dark", darkMode);
+  }, [darkMode]);
 
-        setEntries(Array.isArray(data.entries) ? data.entries : []);
-      } catch (err) {
-        console.error("Error loading entries:", err);
-        setEntries([]); // fail-safe
-      }
-    };
+  // Load entries from server when user is logged in
+  useEffect(() => {
+    if (!user) return;
+    refreshEntries();
+  }, [user]);
 
-    loadFromServer();
-  }, []);
+  const refreshEntries = async () => {
+    try {
+      const res = await api.get("/entries");
+      setEntries(Array.isArray(res.data.entries) ? res.data.entries : []);
+    } catch (err) {
+      console.error("Error loading entries:", err);
+      setEntries([]);
+    }
+  };
 
-
-       // SAVE ENTRY
   const saveEntry = async (textOnly) => {
     if (!textOnly || !textOnly.trim()) return;
-
     try {
-      const res = await axios.post(`${API}/analyze`, { text: textOnly });
+      const res = await api.post("/entries/analyze", { text: textOnly });
       const moodData = res.data?.mood || "Neutral";
-
       const now = new Date();
       const newEntry = {
         id: Date.now(),
@@ -95,41 +74,33 @@ useEffect(() => {
         mood: moodData,
         images: [],
         audio: null,
-        confirmed: false
+        confirmed: false,
       };
-
-      setEntries((prev) => [newEntry, ...prev]);
+      setEntries(prev => [newEntry, ...prev]);
       setTodayText("");
       setMood(moodData);
-
     } catch (err) {
-      console.error(err);
+      console.error("saveEntry error:", err);
     }
   };
 
+  const addEntry = (entry) => setEntries(prev => [entry, ...prev]);
+  const deleteEntry = (id) => setEntries(entries.filter(e => e.id !== id));
 
-      //  ADD ENTRY (WITH MEDIA)
-  const addEntry = (entry) => {
-    setEntries((prev) => [entry, ...prev]);
+  const handleAuth = (userData) => {
+    setUser(userData);
   };
 
-
-      //  DELETE ENTRY
-  const deleteEntry = (id) =>
-    setEntries(entries.filter((e) => e.id !== id));
-
-
-      //  REFRESH AFTER CONFIRM
-  const refreshEntries = async () => {
-    try {
-      const res = await fetch(`${API}/get_entries`);
-      const data = await res.json();
-      setEntries(Array.isArray(data.entries) ? data.entries : []);
-    } catch (err) {
-      console.error("Refresh error:", err);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setEntries([]);
   };
 
+  if (!user) {
+    return <Auth onAuth={handleAuth} />;
+  }
 
   return (
     <div className={darkMode ? "app dark" : "app"}>
@@ -138,6 +109,8 @@ useEffect(() => {
         setDarkMode={setDarkMode}
         page={page}
         setPage={setPage}
+        user={user}
+        onLogout={handleLogout}
       />
 
       <main className="main-shell">
@@ -153,22 +126,13 @@ useEffect(() => {
               deleteEntry={deleteEntry}
               mood={mood}
               refreshEntries={refreshEntries}
-              API={API}
+              API={API_BASE}
             />
           )}
 
-          {page === "tasks" && (
-            <Tasks
-              tasks={tasks}
-              taskText={taskText}
-              setTaskText={setTaskText}
-              addTask={addTask}
-              toggleTask={toggleTask}
-              deleteTask={deleteTask}
-              taskCategory={taskCategory}
-              setTaskCategory={setTaskCategory}
-              clearCompleted={clearCompleted}
-            />
+
+          {page === "leaderboard" && (
+            <LeaderboardPage currentUser={user} />
           )}
 
           {page === "analytics" && (
