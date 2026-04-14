@@ -8,7 +8,7 @@ import Auth from "./components/Auth.jsx";
 import { api } from "./services/api.js";
 import LeaderboardPage from "./components/Leaderboard.jsx";
 
-export const API_BASE = "http://localhost:5000";
+export const API_BASE = "https://innerspace-a4oq.onrender.com";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
