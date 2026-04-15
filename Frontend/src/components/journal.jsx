@@ -385,6 +385,90 @@ export default function Journal({ entries = [], todayText, setTodayText, saveEnt
     setLocalEntries(updated);
     localStorage.setItem(draftKey, JSON.stringify(updated));
   };
+ 
+
+function MoodTyping({ label }) {
+  const MOOD_PHRASES = {
+    Overwhelmed:  ["Take it one breath at a time.", "You don't have to do it all today.", "Rest is productive too.", "It's okay to ask for help."],
+    Heavy:        ["Tough days pass.", "You're carrying a lot — be gentle with yourself.", "Small steps still count.", "It's okay to feel this way."],
+    BurnOut:      ["Slow down. You matter more than your output.", "Even the best need a reset.", "Rest before you run empty.", "Recovery is part of the process."],
+    Neutral:      ["A quiet day is still a good day.", "Steady is underrated.", "Not every day needs to be great.", "You showed up. That counts."],
+    Content:      ["You're doing well.", "Contentment is its own kind of joy.", "Enjoy the calm.", "This is a good place to be."],
+    Positive:     ["Keep this energy going!", "Good vibes, good day.", "You're on a roll.", "Positivity is contagious — spread it."],
+    Happy:        ["Love to see it!", "This energy is everything.", "Happiness looks good on you.", "Savour this moment."],
+    Accomplished: ["Look at you go!", "You earned this.", "Hard work pays off.", "Be proud of what you did today."],
+    Fulfilled:    ["You're living with purpose.", "This is what it's all about.", "Deep satisfaction is rare — enjoy it.", "You made something matter today."],
+    Euphoric:     ["Today is one for the books!", "Absolutely thriving!", "Peak mode: activated.", "Bottle this feeling — it's gold."],
+  };
+
+  const phrases = MOOD_PHRASES[label] || MOOD_PHRASES.Neutral;
+  const [displayed, setDisplayed] = useState("");
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [charIdx, setCharIdx]     = useState(0);
+  const [deleting, setDeleting]   = useState(false);
+  const [paused, setPaused]       = useState(false);
+
+  useEffect(() => {
+    setPhraseIdx(0); setCharIdx(0); setDeleting(false); setPaused(false); setDisplayed("");
+  }, [label]);
+
+  useEffect(() => {
+    if (paused) {
+      const t = setTimeout(() => { setDeleting(true); setPaused(false); }, 2200);
+      return () => clearTimeout(t);
+    }
+    const current = phrases[phraseIdx];
+    if (!deleting) {
+      if (charIdx < current.length) {
+        const t = setTimeout(() => {
+          setDisplayed(current.slice(0, charIdx + 1));
+          setCharIdx(c => c + 1);
+        }, 38);
+        return () => clearTimeout(t);
+      } else {
+        setPaused(true);
+      }
+    } else {
+      if (charIdx > 0) {
+        const t = setTimeout(() => {
+          setDisplayed(current.slice(0, charIdx - 1));
+          setCharIdx(c => c - 1);
+        }, 22);
+        return () => clearTimeout(t);
+      } else {
+        setDeleting(false);
+        setPhraseIdx(i => (i + 1) % phrases.length);
+      }
+    }
+  }, [charIdx, deleting, paused, phraseIdx, phrases]);
+
+  const c = cfg(label);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+      <MoodBadge label={label} />
+      <div style={{
+        fontSize: 12,
+        color: c.color,
+        minWidth: 160,
+        textAlign: "right",
+        fontStyle: "italic",
+        minHeight: 18,
+        letterSpacing: "0.01em",
+      }}>
+        {displayed}
+        <span style={{
+          display: "inline-block",
+          width: 1.5,
+          height: "1em",
+          background: c.color,
+          marginLeft: 2,
+          verticalAlign: "text-bottom",
+          animation: "j-blink 0.9s step-end infinite",
+        }} />
+      </div>
+    </div>
+  );
+}
 
   return (
     <>
@@ -398,8 +482,8 @@ export default function Journal({ entries = [], todayText, setTodayText, saveEnt
             <p className="j-date">{todayLabel}</p>
           </div>
           <div className="j-header-right">
-            <MoodBadge label={detected.label}  />
-          </div>
+  <MoodTyping label={detected.label} />
+</div>
         </div>
 
         <div className="j-inner">

@@ -48,6 +48,10 @@
   align-items: center;
   flex-wrap: wrap;
 }
+@keyframes j-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
 
 /* ── Inner container ────────────────────────────── */
 .j-inner {
