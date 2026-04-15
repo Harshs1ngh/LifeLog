@@ -158,13 +158,7 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 12px 34px rgba(0,0,0,0.45);
   color: #f0f3f7;
-}
-.app.dark .  {
-  background: #16122a;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 12px 34px rgba(0,0,0,0.45);
-  color: #f0f3f7;
-}
+} 
 
 
 /* DARK MODE TOPBAR OVERRIDE */
@@ -182,9 +176,9 @@ body,html,#root{ height:100%; margin:0; }
 body{ font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto; }
 
 /* Top rounded header (Reflection-style) */
-.topbar{
-  width: calc(100% - 80px);
-  margin:24px 40px;
+.topbar {
+  width: calc(100% - 32px);
+  margin: 12px 16px;
   border-radius:48px;
   padding:12px 20px;
   background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
@@ -205,8 +199,8 @@ body{ font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto; }
 .theme{ background:transparent; border:1px solid rgba(15,23,42,0.05); padding:6px 10px; border-radius:8px; cursor:pointer; }
 
 /* Main shell */
-.main-shell{ padding:28px 40px; }
-.container{ max-width:1100px; margin:20px auto; }
+.main-shell { padding: 12px 16px; }
+.container { max-width: 1100px; margin: 0 auto; width: 100%; }
 
 /* Cards */
 .card{ background:var(--card); padding:16px; border-radius:12px; box-shadow:0 6px 20px rgba(16,24,40,0.06); border:1px solid rgba(15,23,42,0.03); margin-bottom:16px; }
@@ -743,6 +737,16 @@ body{ font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto; }
     margin: 8px 0;
   }
 }
+@media (max-width: 480px) {
+  .topbar {
+    width: calc(100% - 24px);
+    margin: 8px 12px;
+    border-radius: 20px;
+  }
+  .main-shell {
+    padding: 8px 12px;
+  }
+}
 
 
 /* Dark mode should control the entire document, not just .app */
@@ -754,3 +758,4 @@ html.dark, html.dark body {
 html, body {
   background: var(--bg) !important;
 }
+

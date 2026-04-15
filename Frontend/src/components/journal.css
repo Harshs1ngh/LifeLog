@@ -48,9 +48,59 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
+/* Find this: */
+.j-header {
+  padding: 22px 28px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Change to: */
+.j-header {
+  padding: 22px 28px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Add this below: */
+@media (max-width: 480px) {
+  .j-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 16px;
+  }
+  .j-header-right {
+    justify-content: center;
+    width: 100%;
+  }
+  .j-date {
+    text-align: center;
+  }
+}
+
 @keyframes j-blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
+}
+
+@media (max-width: 640px) {
+  .j-header-right {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+
+  /* Hide Draft Words stat card on mobile */
+  .j-stats-row .j-stat-card:last-child {
+    display: none;
+  }
 }
 
 /* ── Inner container ────────────────────────────── */

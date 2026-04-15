@@ -287,7 +287,7 @@ const s = {
   retryBtn:    { fontSize: 13, color: "#fff", background: "#534AB7", border: "none", padding: "9px 22px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
 
   hero:        { textAlign: "center", padding: "16px 0 22px" },
-  heroTitle:   { fontSize: 26, fontWeight: 600, color: "var(--color-text-primary, #868686)", letterSpacing: "-0.02em", marginBottom: 6 , marginTop: -70 },
+  heroTitle:   { fontSize: 26, fontWeight: 600, color: "var(--color-text-primary, #868686)", letterSpacing: "-0.02em", marginBottom: 6 , marginTop: -50 },
   heroDate:    { fontSize: 13, color: "var(--color-text-secondary, #6b7280)", marginBottom: 3 },
   heroSub:     { fontSize: 12, color: "var(--color-text-tertiary, #9ca3af)" },
 
