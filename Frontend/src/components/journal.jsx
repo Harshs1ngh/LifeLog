@@ -213,8 +213,8 @@ function MoodTyping({ label }) {
     Neutral:      ["A quiet day is still a good day.", "Steady is underrated.", "Not every day needs to be great.", "You showed up. That counts."],
     Content:      ["You're doing well.", "Contentment is its own kind of joy.", "Enjoy the calm.", "This is a good place to be."],
     Positive:     ["Keep this energy going!", "Good vibes, good day.", "You're on a roll.", "Positivity is contagious — spread it."],
-    Happy:        ["Love to see it!", "This energy is everything.", "Happiness looks good on you.", "Savour this moment."],
-    Accomplished: ["Look at you go!", "You earned this.", "Hard work pays off.", "Be proud of what you did today."],
+    Happy:        ["Love to see it!", "This energy is everything.", "Happiness suits you.", "Savour this moment."],
+    Accomplished: ["Look at you go!", "You earned this.", "Hard work pays off.", "Proud of what you did."],
     Fulfilled:    ["You're living with purpose.", "This is what it's all about.", "Deep satisfaction is rare — enjoy it.", "You made something matter today."],
     Euphoric:     ["Today is one for the books!", "Absolutely thriving!", "Peak mode: activated.", "Bottle this feeling — it's gold."],
   };

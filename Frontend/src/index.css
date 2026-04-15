@@ -187,7 +187,7 @@ body{ font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto; }
 }
 .topbar.dark{ background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); }
 .topbar-inner{ display:flex; align-items:center; gap:20px; justify-content:space-between; }
-.brand{ font-weight:800; font-size:24px; color:#584caa; letter-spacing:0.5px; }
+.brand{ font-weight:800; font-size:23px; color:#8354c5; letter-spacing:0.5px; }
 
 .top-nav{ display:flex; gap:18px; align-items:center; }
 .nav-link{ background:transparent; border:none; padding:8px 12px; border-radius:12px; font-weight:600; cursor:pointer; color:inherit; }

@@ -21,7 +21,7 @@ export default function App() {
 
   const [tasks, setTasks] = useState(() => {
     try { return JSON.parse(localStorage.getItem("tasks")) || []; } catch { return []; }
-  });
+  }); 
   const [taskText, setTaskText] = useState("");
   const [taskCategory, setTaskCategory] = useState("Work");
 
