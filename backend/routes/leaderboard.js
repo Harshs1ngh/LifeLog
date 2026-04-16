@@ -21,7 +21,7 @@ router.get("/", protect, async (req, res) => {
 });
 
 // Manual trigger for testing (remove in production)
-import { updateLeaderboard } from "../cron/leaderboardCron.js";
+ 
 router.post("/trigger-update", protect, async (req, res) => {
   try {
     await updateLeaderboard();
