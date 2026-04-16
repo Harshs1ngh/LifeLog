@@ -2,17 +2,15 @@
 import express from "express";
 import Leaderboard from "../models/Leaderboard.js";
 import { protect } from "../middleware/auth.js";
-import { updateLeaderboard } from "../cron/leaderboardCron.js";
 
 const router = express.Router();
 
 router.get("/", protect, async (req, res) => {
   try {
-    await updateLeaderboard(); // sync before returning
     const board = await Leaderboard.find()
       .sort({ totalPoints: -1 })
       .limit(50);
-    const filtered = board.filter(e => e.totalPoints >= 0); // include 0 pts users
+    const filtered = board.filter(e => e.totalPoints > 0);
     res.json(filtered);
   } catch (err) {
     console.error("Leaderboard fetch error:", err);
@@ -21,7 +19,7 @@ router.get("/", protect, async (req, res) => {
 });
 
 // Manual trigger for testing (remove in production)
- 
+import { updateLeaderboard } from "../cron/leaderboardCron.js";
 router.post("/trigger-update", protect, async (req, res) => {
   try {
     await updateLeaderboard();
