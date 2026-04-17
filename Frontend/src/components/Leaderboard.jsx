@@ -4,10 +4,16 @@ import { api } from "../services/api.js";
 const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
 
 function getTier(pts) {
-  if (pts >= 40) return { label: "Deep Reflection", color: "#534AB7", bg: "#EEEDFE", textColor: "#3C3489" };
-  if (pts >= 25) return { label: "Good",            color: "#0F6E56", bg: "#E1F5EE", textColor: "#085041" };
-  if (pts >= 15)  return { label: "Normal",          color: "#854F0B", bg: "#FAEEDA", textColor: "#633806" };
-  return               { label: "Low Effort",       color: "#5F5E5A", bg: "#F1EFE8", textColor: "#444441" };
+  if (pts >= 90) return { label: "Mastery",           color: "#2B2D42", bg: "#E9ECF5", textColor: "#1B1E2B" };
+  if (pts >= 80) return { label: "Exceptional",       color: "#3A0CA3", bg: "#F0EDFF", textColor: "#240B6B" };
+  if (pts >= 70) return { label: "Deep Reflection",   color: "#534AB7", bg: "#EEEDFE", textColor: "#3C3489" };
+  if (pts >= 60) return { label: "Very Strong",       color: "#4361EE", bg: "#EDF2FF", textColor: "#2C3BB3" };
+  if (pts >= 50) return { label: "Strong",            color: "#0F6E56", bg: "#E1F5EE", textColor: "#085041" };
+  if (pts >= 40) return { label: "Good",              color: "#2A9D8F", bg: "#E0F7F5", textColor: "#1B6F66" };
+  if (pts >= 30) return { label: "Above Average",     color: "#E9C46A", bg: "#FFF6E5", textColor: "#A67C00" };
+  if (pts >= 20) return { label: "Normal",            color: "#F4A261", bg: "#FFF1E6", textColor: "#A65A1F" };
+  if (pts >= 10) return { label: "Low Effort",        color: "#E76F51", bg: "#FFEAE5", textColor: "#A63E2A" };
+  return               { label: "Very Low",          color: "#5F5E5A", bg: "#F1EFE8", textColor: "#444441" };
 }
 
 function initial(name) {
