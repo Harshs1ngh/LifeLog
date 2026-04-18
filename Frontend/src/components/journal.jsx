@@ -127,7 +127,7 @@ function mapTo7(avg) {
 
 const LEVEL_LABELS = {
   1: "Overwhelmed", 2: "Heavy", 3: "BurnOut",
-  4: "Neutral", 5: "Content", 6: "Positive",
+  4: "Normal", 5: "Content", 6: "Positive",
   7: "Happy", 8: "Accomplished", 9: "Fulfilled", 10: "Euphoric",
 };
 
@@ -151,16 +151,16 @@ function generateSummary(events, level) {
     ? `You had both positive moments and stressful ones today — ${poss.join("; ")} but also ${negs.join("; ")}.`
     : negs.length ? `Today had some difficult moments: ${negs.join("; ")}.`
       : poss.length ? `Today included some nice moments: ${poss.join("; ")}.`
-        : "Today was fairly neutral with no strongly emotional events recorded.";
+        : "Today was fairly normal with no strongly emotional events recorded.";
   const interp = level >= 6 ? "Overall a really positive day — nice!"
     : level === 5 ? "Overall the day was good and balanced."
-      : level === 4 ? "Overall it looks like a neutral day."
+      : level === 4 ? "Overall it looks like a normal day."
         : level === 3 ? "Overall the day felt a bit tough."
           : "Overall this was a difficult day and it's okay to feel that.";
   const pool = level >= 5
     ? ["Keep this momentum — little routines help keep good days steady.", "Nice day — celebrate the wins, even if small."]
     : level >= 3
-      ? ["A neutral day is a good chance to rest and reset for tomorrow.", "Small regenerating actions (walk, nap, water) can tilt the next day positively."]
+      ? ["A normal day is a good chance to rest and reset for tomorrow.", "Small regenerating actions (walk, nap, water) can tilt the next day positively."]
       : ["It's okay — hard moments pass. Try to breathe, rest, and do one small caring thing for yourself.", "Don't be harsh on yourself; reach out to someone you trust."];
   return { summary, interpretation: interp, advice: pool[Math.floor(Math.random() * pool.length)] };
 }
@@ -173,7 +173,7 @@ function localAnalyze(text) {
   return { label: LEVEL_LABELS[mapped], score: mapped, events, ...generateSummary(events, mapped) };
 }
 
-const cfg = (label) => MOOD_CONFIG[label] || MOOD_CONFIG.Neutral;
+const cfg = (label) => MOOD_CONFIG[label] || MOOD_CONFIG.Normal;
 
 function MoodBadge({ label }) {
   const c = cfg(label);
@@ -185,7 +185,7 @@ function MoodBadge({ label }) {
 }
 
 function MoodBar({ score }) {
-  const c = cfg(LEVEL_LABELS[score] || "Neutral");
+  const c = cfg(LEVEL_LABELS[score] || "Normal");
   return (
     <div className="j-mood-bar-wrap">
       <div className="j-mood-bar-track">
@@ -210,7 +210,7 @@ function MoodTyping({ label }) {
     Overwhelmed:  ["Take it one breath at a time.", "You don't have to do it all today.", "Rest is productive too.", "It's okay to ask for help."],
     Heavy:        ["Tough days pass.", "You're carrying a lot — be gentle with yourself.", "Small steps still count.", "It's okay to feel this way."],
     BurnOut:      ["Slow down. You matter more than your output.", "Even the best need a reset.", "Rest before you run empty.", "Recovery is part of the process."],
-    Neutral:      ["A quiet day is still a good day.", "Steady is underrated.", "Not every day needs to be great.", "You showed up. That counts."],
+    Normal:      ["A quiet day is still a good day.", "Steady is underrated.", "Not every day needs to be great.", "You showed up. That counts."],
     Content:      ["You're doing well.", "Contentment is its own kind of joy.", "Enjoy the calm.", "This is a good place to be."],
     Positive:     ["Keep this energy going!", "Good vibes, good day.", "You're on a roll.", "Positivity is contagious — spread it."],
     Happy:        ["Love to see it!", "This energy is everything.", "Happiness suits you.", "Savour this moment."],
@@ -219,7 +219,7 @@ function MoodTyping({ label }) {
     Euphoric:     ["Today is one for the books!", "Absolutely thriving!", "Peak mode: activated.", "Bottle this feeling — it's gold."],
   };
 
-  const phrases = MOOD_PHRASES[label] || MOOD_PHRASES.Neutral;
+  const phrases = MOOD_PHRASES[label] || MOOD_PHRASES.Normal;
   const [displayed, setDisplayed] = useState("");
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [charIdx, setCharIdx]     = useState(0);
@@ -334,7 +334,7 @@ export default function Journal({ entries = [], todayText, setTodayText, saveEnt
 
   const detected = useMemo(() => {
     const savedText = todaysEntries.map(e => e.text || "").join(". ").trim();
-    if (!savedText) return { label: "Neutral", score: 4 };
+    if (!savedText) return { label: "Normal", score: 4 };
     const events = splitSentences(savedText).map(s => scoreSentence(s));
     let total = 0, weight = 0;
     events.forEach((ev, i) => { const w = 1 + i * 0.05; total += ev.score * w; weight += w; });
