@@ -73,7 +73,10 @@ const EMOTION_COLORS = {
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
 const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
-function isoDate(d){ return new Date(d).toISOString().split("T")[0]; }
+function isoDate(d){ 
+  const date = new Date(d);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
 function moodBase(mood) {
   if (!mood) return 4;
   const l = mood.toLowerCase();
