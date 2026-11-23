@@ -14,7 +14,8 @@ export const analyzeEntry = (req, res) => {
 export const saveEntry = async (req, res) => {
   try {
     const { text, images, audio, dateOnly } = req.body;
- // ── Duplicate guard ──────────────────────────────
+    
+    //──────────────────────────────
     const existing = await Entry.findOne({
       userId: req.user.id,
       text: text?.trim(),
